@@ -356,6 +356,7 @@ const adminName =
 let currentScreen = 'dashboard';
 
 let dashboardRefreshTimer = null;
+let dashboardRequestId = 0;
 
 let currentGiveawayId = '';
 
@@ -535,6 +536,8 @@ function renderFinishedGiveaway(giveaway) {
   currentGiveawayId = '';
 
   currentScreen = 'history-detail';
+
+  dashboardRequestId++;
 
   const winners =
     giveaway.winners_list || [];
@@ -941,6 +944,8 @@ async function showParticipants() {
 
   currentScreen = 'participants';
 
+  dashboardRequestId++;
+
   content.innerHTML = `
 
     <div class="loading">
@@ -1283,6 +1288,8 @@ function filterParticipants() {
 async function showHistory() {
 
   currentScreen = 'history';
+
+  dashboardRequestId++;
 
 
   content.innerHTML = `
@@ -2560,64 +2567,54 @@ async function loadDashboard(
 ) {
 
   /*
-   * Если пользователь сейчас находится
-   * в истории или в форме создания,
-   * автоматический refresh не должен
-   * перерисовывать экран.
+   * Автообновление разрешено только на dashboard.
    */
-
   if (
     !showLoading &&
     currentScreen !== 'dashboard'
   ) {
-
     return;
-
   }
 
+  const requestId = ++dashboardRequestId;
 
   try {
 
     if (showLoading) {
-
       content.innerHTML = `
-
         <div class="loading">
           🔄 Загружаем админку...
         </div>
-
       `;
-
     }
 
+    const data = await callApi('dashboard');
 
-    const data =
-      await callApi(
-        'dashboard'
-      );
+    /*
+     * Пользователь мог открыть историю/создание/участников
+     * пока запрос dashboard ещё выполнялся.
+     * Старый ответ в таком случае НЕЛЬЗЯ применять.
+     */
+    if (
+      requestId !== dashboardRequestId ||
+      currentScreen !== 'dashboard'
+    ) {
+      return;
+    }
 
-
-    renderDashboard(
-      data
-    );
-
+    renderDashboard(data);
 
   } catch (error) {
 
     console.error(error);
 
-
-    /*
-     * При автообновлении не уничтожаем
-     * уже рабочую админку.
-     */
-
-    if (showLoading) {
-
+    if (
+      showLoading &&
+      requestId === dashboardRequestId &&
+      currentScreen === 'dashboard'
+    ) {
       showError(error);
-
     }
-
   }
 
 }
@@ -2710,4 +2707,3 @@ document.addEventListener(
 
 </body>
 </html>
-
