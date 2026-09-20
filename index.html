@@ -526,9 +526,6 @@ function renderDashboard(data) {
   const giveaway =
     data.giveaway;
 
-  const stats =
-    data.stats || {};
-
 
   if (!giveaway) {
 
@@ -607,7 +604,7 @@ function renderDashboard(data) {
       <div class="stat">
         <div class="stat-value">
           ${Number(
-            stats.participants || 0
+            giveaway.participants || 0
           )}
         </div>
         <div class="stat-label">
@@ -619,7 +616,7 @@ function renderDashboard(data) {
       <div class="stat">
         <div class="stat-value">
           ${Number(
-            stats.tickets || 0
+            giveaway.tickets || 0
           )}
         </div>
         <div class="stat-label">
@@ -631,7 +628,7 @@ function renderDashboard(data) {
       <div class="stat">
         <div class="stat-value">
           ${Number(
-            stats.referrals || 0
+            giveaway.referrals || 0
           )}
         </div>
         <div class="stat-label">
@@ -643,7 +640,7 @@ function renderDashboard(data) {
       <div class="stat">
         <div class="stat-value">
           ${Number(
-            stats.winners || 0
+            giveaway.winners_count || 0
           )}
         </div>
         <div class="stat-label">
@@ -1148,17 +1145,21 @@ async function createGiveaway() {
 }
 
 
-async function loadDashboard() {
+async function loadDashboard(showLoading = true) {
 
   try {
 
-    content.innerHTML = `
+    if (showLoading) {
 
-      <div class="loading">
-        🔄 Загружаем админку...
-      </div>
+      content.innerHTML = `
 
-    `;
+        <div class="loading">
+          🔄 Загружаем админку...
+        </div>
+
+      `;
+
+    }
 
 
     const data =
@@ -1176,21 +1177,17 @@ async function loadDashboard() {
 
     console.error(error);
 
-    showError(error);
+    // При автообновлении не уничтожаем уже показанную
+    // рабочую админку из-за кратковременной ошибки сети.
+    if (showLoading) {
+      showError(error);
+    }
 
   }
 
 }
 
 
-loadDashboard();
-
-</script>
-
-</body>
-</html>
-
-</script>
 // ==========================================
 // АВТООБНОВЛЕНИЕ MINI APP
 // ==========================================
@@ -1199,30 +1196,40 @@ let dashboardRefreshTimer = null;
 
 function startDashboardAutoRefresh() {
 
-  // Если таймер уже существует — не создаём второй
   if (dashboardRefreshTimer) {
     return;
   }
 
   dashboardRefreshTimer =
-    setInterval(async function() {
+    setInterval(function() {
 
-      try {
-
-        await loadDashboard();
-
-      } catch (err) {
-
-        console.log(
-          'AUTO REFRESH ERROR:',
-          err
-        );
-
-      }
+      loadDashboard(false);
 
     }, 3000);
 }
 
 
-// Запускаем автообновление
+// ==========================================
+// ПЕРВИЧНАЯ ЗАГРУЗКА
+// ==========================================
+
+loadDashboard(true);
 startDashboardAutoRefresh();
+
+
+// ==========================================
+// ОБНОВЛЕНИЕ ПРИ ВОЗВРАТЕ В MINI APP
+// ==========================================
+
+document.addEventListener('visibilitychange', function() {
+
+  if (!document.hidden) {
+    loadDashboard(false);
+  }
+
+});
+
+</script>
+
+</body>
+</html>
