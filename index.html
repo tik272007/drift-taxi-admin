@@ -1636,9 +1636,7 @@ function renderEmptyDashboard() {
 
 function renderDashboard(data) {
 
-  currentScreen =
-    'dashboard';
-
+  currentScreen = 'dashboard';
 
   if (data.ok === false) {
 
@@ -1901,6 +1899,15 @@ function renderDashboard(data) {
     <div class="section-title">
       Управление
     </div>
+
+
+    <!-- НОВАЯ КНОПКА -->
+
+    <button
+      onclick="showParticipants()"
+    >
+      👥 Участники
+    </button>
 
 
     <button
