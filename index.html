@@ -743,7 +743,6 @@ function renderFinishedGiveaway(giveaway) {
 
     <div class="stats">
 
-
       <div class="stat">
 
         <div class="stat-value">
@@ -879,7 +878,6 @@ function renderFinishedGiveaway(giveaway) {
     </button>
 
 
-
     <button
       class="primary"
       onclick="drawActiveFromMiniApp()"
@@ -914,6 +912,359 @@ function renderFinishedGiveaway(giveaway) {
 
 }
 
+
+/* ==========================================
+   HISTORY
+   ========================================== */
+
+async function showHistory() {
+
+  currentScreen = 'history';
+
+  dashboardRequestId++;
+
+
+  content.innerHTML = `
+
+    <div class="loading">
+      🔄 Загружаем историю...
+    </div>
+
+  `;
+
+
+  try {
+
+    const data =
+      await callApi(
+        'history'
+      );
+
+
+    if (
+      !data ||
+      data.ok === false
+    ) {
+
+      throw new Error(
+        data &&
+        data.error
+          ? data.error
+          : 'Не удалось загрузить историю'
+      );
+
+    }
+
+
+    renderHistory(
+      data.history || []
+    );
+
+
+  } catch (error) {
+
+    console.error(error);
+
+    showError(error);
+
+  }
+
+}
+
+
+function renderHistory(history) {
+
+  currentScreen = 'history';
+
+
+  if (!history.length) {
+
+    content.innerHTML = `
+
+      <div class="card">
+
+        <div class="title">
+          📚 История розыгрышей
+        </div>
+
+        <div class="muted">
+          Завершённых розыгрышей пока нет.
+        </div>
+
+      </div>
+
+
+      <button
+        class="primary"
+        onclick="loadDashboard(true)"
+      >
+        ← Назад
+      </button>
+
+    `;
+
+    return;
+
+  }
+
+
+  let html = '';
+
+
+  history.forEach(
+    function(giveaway) {
+
+      html += `
+
+        <div
+          class="card"
+          onclick="openHistoryGiveaway('${String(
+            giveaway.giveaway_id
+          ).replace(/'/g, "\\'")}')"
+          style="
+            cursor:pointer;
+            margin-bottom:12px;
+          "
+        >
+
+          <div class="status">
+
+            <div class="muted">
+              🏁 Завершён
+            </div>
+
+            <div class="badge">
+              РЕЗУЛЬТАТЫ
+            </div>
+
+          </div>
+
+
+          <div class="title">
+
+            ${escapeHtml(
+              giveaway.title ||
+              'DRIFT TAXI'
+            )}
+
+          </div>
+
+
+          <div class="id">
+
+            ID:
+            ${escapeHtml(
+              giveaway.giveaway_id ||
+              '—'
+            )}
+
+          </div>
+
+
+          <div
+            style="
+              margin-top:12px;
+              display:grid;
+              grid-template-columns:1fr 1fr;
+              gap:8px;
+            "
+          >
+
+            <div class="muted">
+              👥 ${Number(
+                giveaway.participants ||
+                0
+              )} участников
+            </div>
+
+
+            <div class="muted">
+              🎟 ${Number(
+                giveaway.tickets ||
+                0
+              )} тикетов
+            </div>
+
+
+            <div class="muted">
+              📤 ${Number(
+                giveaway.referrals ||
+                0
+              )} приглашений
+            </div>
+
+
+            <div class="muted">
+              🏆 ${Number(
+                giveaway.winners_count ||
+                0
+              )} победителей
+            </div>
+
+          </div>
+
+
+          <div
+            class="muted"
+            style="margin-top:12px;"
+          >
+
+            ${escapeHtml(
+              formatDate(
+                giveaway.drawn_at ||
+                giveaway.end_at
+              )
+            )}
+
+          </div>
+
+        </div>
+
+      `;
+
+    }
+  );
+
+
+  content.innerHTML = `
+
+    <div
+      style="
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        margin-bottom:14px;
+      "
+    >
+
+      <div class="title">
+        📚 История
+      </div>
+
+    </div>
+
+
+    ${html}
+
+
+    <button
+      class="primary"
+      onclick="loadDashboard(true)"
+    >
+      ← Назад
+    </button>
+
+  `;
+
+}
+
+
+/* ==========================================
+   OPEN HISTORY GIVEAWAY
+   ========================================== */
+
+async function openHistoryGiveaway(
+  giveawayId
+) {
+
+  currentScreen =
+    'history-detail';
+
+
+  content.innerHTML = `
+
+    <div class="loading">
+      🔄 Загружаем результаты...
+    </div>
+
+  `;
+
+
+  try {
+
+    const data =
+      await callApi(
+        'giveaway',
+        {
+          id:
+            giveawayId
+        }
+      );
+
+
+    if (
+      !data ||
+      data.ok === false
+    ) {
+
+      throw new Error(
+        data &&
+        data.error
+          ? data.error
+          : 'Не удалось загрузить розыгрыш'
+      );
+
+    }
+
+
+    renderFinishedGiveaway(
+      data.giveaway
+    );
+
+
+  } catch (error) {
+
+    console.error(error);
+
+    showError(error);
+
+  }
+
+}
+
+
+/* ==========================================
+   EMPTY DASHBOARD
+   ========================================== */
+
+function renderEmptyDashboard() {
+
+  currentGiveawayId = '';
+
+  currentScreen =
+    'dashboard';
+
+
+  content.innerHTML = `
+
+    <div class="card">
+
+      <div class="title">
+        🚗 DRIFT TAXI
+      </div>
+
+      <div class="muted">
+        Сейчас нет активных или завершённых розыгрышей.
+      </div>
+
+    </div>
+
+
+    <button
+      class="primary"
+      onclick="showCreateForm()"
+    >
+      🎁 Создать новый розыгрыш
+    </button>
+
+  `;
+
+}
+
+
+/* ==========================================
+   DASHBOARD
+   ========================================== */
 
 function renderDashboard(data) {
 
@@ -1073,22 +1424,6 @@ function renderDashboard(data) {
 
         <div class="stat-value">
           ${Number(
-            giveaway.participants ||
-            0
-          )}
-        </div>
-
-        <div class="stat-label">
-          Участников
-        </div>
-
-      </div>
-
-
-      <div class="stat">
-
-        <div class="stat-value">
-          ${Number(
             giveaway.tickets ||
             0
           )}
@@ -1201,8 +1536,6 @@ function renderDashboard(data) {
   `;
 
 }
-
-
 
 
 /* ==========================================
@@ -1985,6 +2318,9 @@ document.addEventListener(
 
   }
 );
+
+
+/* FIX: renderDashboard restored; participants removed */
 
 </script>
 
