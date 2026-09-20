@@ -356,9 +356,6 @@ const adminName =
 let currentScreen = 'dashboard';
 
 let dashboardRefreshTimer = null;
-let dashboardRequestId = 0;
-
-let currentGiveawayId = '';
 
 
 /* ==========================================
@@ -449,123 +446,46 @@ async function callApi(
   );
 
 
-  const url =
-    API_URL +
-    '?' +
-    params.toString();
-
-
-  console.log(
-    'API REQUEST:',
-    api,
-    url.substring(0, 200)
-  );
-
-
-  /*
-   * Тайм-аут 15 секунд.
-   * Если Apps Script не отвечает,
-   * Mini App не будет висеть бесконечно.
-   */
-
-  const controller =
-    new AbortController();
-
-  const timeout =
-    setTimeout(
-      function() {
-        controller.abort();
-      },
-      15000
+  const response =
+    await fetch(
+      API_URL +
+      '?' +
+      params.toString()
     );
 
+
+  if (!response.ok) {
+
+    throw new Error(
+      'HTTP ' +
+      response.status
+    );
+
+  }
+
+
+  const text =
+    await response.text();
+
+
+  let data;
 
   try {
 
-    const response =
-      await fetch(
-        url,
-        {
-          method: 'GET',
-          cache: 'no-store',
-          signal: controller.signal
-        }
-      );
+    data =
+      JSON.parse(text);
 
+  } catch (e) {
 
-    clearTimeout(timeout);
-
-
-    console.log(
-      'API RESPONSE:',
-      api,
-      response.status,
-      response.url
+    throw new Error(
+      'Сервер вернул не JSON:\n' +
+      text.substring(0, 300)
     );
-
-
-    if (!response.ok) {
-
-      throw new Error(
-        'HTTP ' +
-        response.status
-      );
-
-    }
-
-
-    const text =
-      await response.text();
-
-
-    console.log(
-      'API TEXT:',
-      api,
-      text.substring(0, 500)
-    );
-
-
-    let data;
-
-
-    try {
-
-      data =
-        JSON.parse(text);
-
-    } catch (e) {
-
-      throw new Error(
-        'Сервер вернул не JSON:\n' +
-        text.substring(0, 500)
-      );
-
-    }
-
-
-    return data;
-
-  } catch (error) {
-
-    clearTimeout(timeout);
-
-
-    if (
-      error &&
-      error.name === 'AbortError'
-    ) {
-
-      throw new Error(
-        'Apps Script не ответил за 15 секунд.\n\n' +
-        'Проверь URL API и доступность веб-приложения.'
-      );
-
-    }
-
-
-    throw error;
 
   }
+
+
+  return data;
 
 }
 
@@ -610,11 +530,7 @@ function showError(error) {
 
 function renderFinishedGiveaway(giveaway) {
 
-  currentGiveawayId = '';
-
   currentScreen = 'history-detail';
-
-  dashboardRequestId++;
 
   const winners =
     giveaway.winners_list || [];
@@ -965,36 +881,6 @@ function renderFinishedGiveaway(giveaway) {
 
 
     <button
-      onclick="refreshActiveGiveaway()"
-    >
-      🔄 Обновить
-    </button>
-
-
-    <button
-      onclick="showParticipants()"
-    >
-      👥 Участники
-    </button>
-
-
-    <button
-      class="primary"
-      onclick="drawActiveFromMiniApp()"
-    >
-      🎲 Провести розыгрыш сейчас
-    </button>
-
-
-    <button
-      onclick="cancelActiveFromMiniApp()"
-      style="background:#3a1717;color:#ff6b63;"
-    >
-      🛑 Остановить без розыгрыша
-    </button>
-
-
-    <button
       onclick="showHistory()"
     >
       📚 История розыгрышей
@@ -1014,359 +900,12 @@ function renderFinishedGiveaway(giveaway) {
 
 
 /* ==========================================
-   PARTICIPANTS
-   ========================================== */
-
-async function showParticipants() {
-
-  currentScreen = 'participants';
-
-  dashboardRequestId++;
-
-  content.innerHTML = `
-
-    <div class="loading">
-      🔄 Загружаем участников...
-    </div>
-
-  `;
-
-  try {
-
-    const data =
-      await callApi('participants');
-
-    if (!data || data.ok === false) {
-      throw new Error(
-        data && data.error
-          ? data.error
-          : 'Не удалось загрузить участников'
-      );
-    }
-
-    renderParticipants(
-      data.giveaway,
-      data.participants || []
-    );
-
-  } catch (error) {
-
-    console.error(error);
-    showError(error);
-
-  }
-
-}
-
-
-function renderParticipants(giveaway, participants) {
-
-  currentScreen = 'participants';
-
-  if (!giveaway) {
-
-    content.innerHTML = `
-
-      <div class="card">
-        <div class="title">
-          👥 Участники
-        </div>
-        <div class="muted">
-          Сейчас нет активного розыгрыша.
-        </div>
-      </div>
-
-      <button
-        class="primary"
-        onclick="loadDashboard(true)"
-      >
-        ← Назад
-      </button>
-
-    `;
-
-    return;
-
-  }
-
-  const statsHtml = `
-
-    <div class="stats">
-
-      <div class="stat">
-        <div class="stat-value">
-          ${Number(giveaway.participants || 0)}
-        </div>
-        <div class="stat-label">
-          Участников
-        </div>
-      </div>
-
-      <div class="stat">
-        <div class="stat-value">
-          ${Number(giveaway.tickets || 0)}
-        </div>
-        <div class="stat-label">
-          Тикетов
-        </div>
-      </div>
-
-      <div class="stat">
-        <div class="stat-value">
-          ${Number(giveaway.referrals || 0)}
-        </div>
-        <div class="stat-label">
-          Приглашений
-        </div>
-      </div>
-
-    </div>
-
-  `;
-
-  const cards =
-    participants.map(function(user, index) {
-
-      const name =
-        user.username
-          ? '@' + user.username
-          : (
-              [user.first_name, user.last_name]
-                .filter(Boolean)
-                .join(' ') ||
-              user.telegram_id ||
-              'Пользователь'
-            );
-
-      const subscription =
-        user.subscribed
-          ? '✅ Подписан'
-          : '❌ Не подписан';
-
-      const flags = [];
-
-      if (user.blocked) {
-        flags.push('⛔ Заблокирован');
-      }
-
-      if (user.suspicious) {
-        flags.push('⚠️ Подозрительный');
-      }
-
-      return `
-
-        <div class="card participant-card"
-          data-search="${escapeHtml(
-            [
-              user.username,
-              user.first_name,
-              user.last_name,
-              user.telegram_id
-            ].filter(Boolean).join(' ')
-          ).toLowerCase()}"
-        >
-
-          <div class="status">
-
-            <div class="muted">
-              #${index + 1}
-            </div>
-
-            <div class="badge">
-              🎟 ${Number(user.tickets || 0)}
-            </div>
-
-          </div>
-
-          <div class="title">
-            ${escapeHtml(name)}
-          </div>
-
-          <div class="id">
-            ID: ${escapeHtml(user.telegram_id || '—')}
-          </div>
-
-          <div
-            style="
-              margin-top:12px;
-              display:grid;
-              grid-template-columns:1fr 1fr;
-              gap:8px;
-            "
-          >
-
-            <div class="muted">
-              📤 ${Number(user.referrals || 0)} приглашений
-            </div>
-
-            <div class="muted">
-              ${subscription}
-            </div>
-
-          </div>
-
-          ${
-            flags.length
-              ? `
-                <div
-                  class="muted"
-                  style="margin-top:10px;"
-                >
-                  ${escapeHtml(flags.join(' · '))}
-                </div>
-              `
-              : ''
-          }
-
-        </div>
-
-      `;
-
-    }).join('');
-
-  content.innerHTML = `
-
-    <div
-      style="
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        margin-bottom:14px;
-      "
-    >
-
-      <div class="title">
-        👥 Участники
-      </div>
-
-    </div>
-
-    <div class="muted" style="margin-bottom:10px;">
-      ${escapeHtml(giveaway.title || 'Активный розыгрыш')}
-    </div>
-
-    ${statsHtml}
-
-    <input
-      id="participantSearch"
-      type="search"
-      placeholder="🔎 Поиск по username, имени или Telegram ID"
-      oninput="filterParticipants()"
-      style="
-        width:100%;
-        box-sizing:border-box;
-        margin:0 0 12px 0;
-        padding:13px 14px;
-        border-radius:12px;
-        border:1px solid rgba(255,255,255,.10);
-        background:#171717;
-        color:#fff;
-        outline:none;
-        font-size:14px;
-      "
-    >
-
-    <div
-      id="participantsList"
-      data-count="${participants.length}"
-    >
-      ${cards || `
-        <div class="card">
-          <div class="muted">
-            Участников пока нет.
-          </div>
-        </div>
-      `}
-    </div>
-
-    <button
-      onclick="showParticipants()"
-    >
-      🔄 Обновить
-    </button>
-
-    <button
-      class="primary"
-      onclick="loadDashboard(true)"
-    >
-      ← Назад
-    </button>
-
-  `;
-
-}
-
-
-function filterParticipants() {
-
-  const input =
-    document.getElementById('participantSearch');
-
-  const list =
-    document.getElementById('participantsList');
-
-  if (!input || !list) return;
-
-  const query =
-    String(input.value || '')
-      .trim()
-      .toLowerCase();
-
-  const cards =
-    list.querySelectorAll('.participant-card');
-
-  let visible = 0;
-
-  cards.forEach(function(card) {
-
-    const haystack =
-      String(card.dataset.search || '');
-
-    const match =
-      !query || haystack.indexOf(query) !== -1;
-
-    card.style.display =
-      match ? '' : 'none';
-
-    if (match) visible++;
-
-  });
-
-  let empty =
-    document.getElementById('participantsSearchEmpty');
-
-  if (!visible && cards.length) {
-
-    if (!empty) {
-      empty = document.createElement('div');
-      empty.id = 'participantsSearchEmpty';
-      empty.className = 'card';
-      empty.innerHTML = `
-        <div class="muted">
-          🔎 Ничего не найдено.
-        </div>
-      `;
-      list.appendChild(empty);
-    }
-
-  } else if (empty) {
-
-    empty.remove();
-
-  }
-
-}
-
-
-/* ==========================================
    HISTORY
    ========================================== */
 
 async function showHistory() {
 
   currentScreen = 'history';
-
-  dashboardRequestId++;
 
 
   content.innerHTML = `
@@ -1615,8 +1154,7 @@ async function openHistoryGiveaway(
   currentScreen =
     'history-detail';
 
-  dashboardRequestId++;
-  
+
   content.innerHTML = `
 
     <div class="loading">
@@ -1675,8 +1213,6 @@ async function openHistoryGiveaway(
 
 function renderEmptyDashboard() {
 
-  currentGiveawayId = '';
-
   currentScreen =
     'dashboard';
 
@@ -1714,7 +1250,9 @@ function renderEmptyDashboard() {
 
 function renderDashboard(data) {
 
-  currentScreen = 'dashboard';
+  currentScreen =
+    'dashboard';
+
 
   if (data.ok === false) {
 
@@ -1753,11 +1291,6 @@ function renderDashboard(data) {
 
   const giveaway =
     data.giveaway;
-
-  currentGiveawayId =
-    giveaway && giveaway.giveaway_id
-      ? String(giveaway.giveaway_id)
-      : '';
 
   const finishedGiveaway =
     data.finishedGiveaway;
@@ -1979,15 +1512,6 @@ function renderDashboard(data) {
     </div>
 
 
-    <!-- НОВАЯ КНОПКА -->
-
-    <button
-      onclick="showParticipants()"
-    >
-      👥 Участники
-    </button>
-
-
     <button
       onclick="showHistory()"
     >
@@ -2003,148 +1527,6 @@ function renderDashboard(data) {
     </button>
 
   `;
-
-}
-
-
-/* ==========================================
-   УПРАВЛЕНИЕ АКТИВНЫМ РОЗЫГРЫШЕМ
-   ========================================== */
-
-async function refreshActiveGiveaway() {
-
-  await loadDashboard(true);
-
-}
-
-
-async function drawActiveFromMiniApp() {
-
-  const giveawayId =
-    currentGiveawayId;
-
-  if (!giveawayId) {
-
-    tg.showAlert(
-      'Активный розыгрыш не найден.'
-    );
-
-    return;
-
-  }
-
-  const confirmed =
-    confirm(
-      '🎲 Провести розыгрыш сейчас?\n\n' +
-      'После этого будут выбраны победители, ' +
-      'а розыгрыш завершится.'
-    );
-
-  if (!confirmed) {
-    return;
-  }
-
-  try {
-
-    const result =
-      await callApi(
-        'drawGiveaway',
-        {
-          id: giveawayId
-        }
-      );
-
-    if (
-      !result ||
-      result.ok === false
-    ) {
-
-      throw new Error(
-        result && result.error
-          ? result.error
-          : 'Не удалось провести розыгрыш.'
-      );
-
-    }
-
-    tg.showAlert(
-      '🎉 Победители выбраны!'
-    );
-
-    currentGiveawayId = '';
-
-    await loadDashboard(true);
-
-  } catch (error) {
-
-    showError(error);
-
-  }
-
-}
-
-
-async function cancelActiveFromMiniApp() {
-
-  const giveawayId =
-    currentGiveawayId;
-
-  if (!giveawayId) {
-
-    tg.showAlert(
-      'Активный розыгрыш не найден.'
-    );
-
-    return;
-
-  }
-
-  const confirmed =
-    confirm(
-      '🛑 Остановить розыгрыш без выбора победителей?\n\n' +
-      'Он будет завершён как отменённый.'
-    );
-
-  if (!confirmed) {
-    return;
-  }
-
-  try {
-
-    const result =
-      await callApi(
-        'cancelGiveaway',
-        {
-          id: giveawayId
-        }
-      );
-
-    if (
-      !result ||
-      result.ok === false
-    ) {
-
-      throw new Error(
-        result && result.error
-          ? result.error
-          : 'Не удалось остановить розыгрыш.'
-      );
-
-    }
-
-    tg.showAlert(
-      'Розыгрыш остановлен.'
-    );
-
-    currentGiveawayId = '';
-
-    await loadDashboard(true);
-
-  } catch (error) {
-
-    showError(error);
-
-  }
 
 }
 
@@ -2652,54 +2034,64 @@ async function loadDashboard(
 ) {
 
   /*
-   * Автообновление разрешено только на dashboard.
+   * Если пользователь сейчас находится
+   * в истории или в форме создания,
+   * автоматический refresh не должен
+   * перерисовывать экран.
    */
+
   if (
     !showLoading &&
     currentScreen !== 'dashboard'
   ) {
+
     return;
+
   }
 
-  const requestId = ++dashboardRequestId;
 
   try {
 
     if (showLoading) {
+
       content.innerHTML = `
+
         <div class="loading">
           🔄 Загружаем админку...
         </div>
+
       `;
+
     }
 
-    const data = await callApi('dashboard');
 
-    /*
-     * Пользователь мог открыть историю/создание/участников
-     * пока запрос dashboard ещё выполнялся.
-     * Старый ответ в таком случае НЕЛЬЗЯ применять.
-     */
-    if (
-      requestId !== dashboardRequestId ||
-      currentScreen !== 'dashboard'
-    ) {
-      return;
-    }
+    const data =
+      await callApi(
+        'dashboard'
+      );
 
-    renderDashboard(data);
+
+    renderDashboard(
+      data
+    );
+
 
   } catch (error) {
 
     console.error(error);
 
-    if (
-      showLoading &&
-      requestId === dashboardRequestId &&
-      currentScreen === 'dashboard'
-    ) {
+
+    /*
+     * При автообновлении не уничтожаем
+     * уже рабочую админку.
+     */
+
+    if (showLoading) {
+
       showError(error);
+
     }
+
   }
 
 }
