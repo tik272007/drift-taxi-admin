@@ -494,6 +494,212 @@ function showError(error) {
 
 }
 
+  function renderFinishedGiveaway(giveaway) {
+  const winners = giveaway.winners_list || [];
+  const prizes = giveaway.prizes || [];
+
+  let winnersHtml = '';
+
+  if (winners.length) {
+    winnersHtml = winners.map(function(winner) {
+      const name =
+        winner.username
+          ? '@' + winner.username
+          : (winner.telegram_id || 'Пользователь');
+
+      return `
+        <div class="card">
+          <div class="muted">
+            🏆 ${winner.place} место
+          </div>
+
+          <div class="title">
+            ${escapeHtml(name)}
+          </div>
+
+          <div class="id">
+            🎁 ${escapeHtml(winner.prize || 'Приз')}
+          </div>
+        </div>
+      `;
+    }).join('');
+  } else {
+    winnersHtml = `
+      <div class="card">
+        <div class="muted">
+          Победители не записаны.
+        </div>
+      </div>
+    `;
+  }
+
+  let prizesHtml = '';
+
+  if (prizes.length) {
+    prizesHtml = prizes.map(function(prize) {
+      return `
+        <div class="card">
+          <div class="muted">
+            ${prize.place} место
+          </div>
+
+          <div class="title">
+            ${escapeHtml(prize.title || 'Приз')}
+          </div>
+
+          <div class="muted">
+            ${escapeHtml(prize.description || '')}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  content.innerHTML = `
+    <div class="card">
+
+      <div class="status">
+        <div class="muted">
+          Последний розыгрыш
+        </div>
+
+        <div class="badge">
+          🏁 ЗАВЕРШЁН
+        </div>
+      </div>
+
+      <div class="title">
+        ${escapeHtml(giveaway.title || 'DRIFT TAXI')}
+      </div>
+
+      <div class="id">
+        ID: ${escapeHtml(giveaway.giveaway_id || '—')}
+      </div>
+
+    </div>
+
+    <div class="stats">
+
+      <div class="stat">
+        <div class="stat-value">
+          ${Number(giveaway.participants || 0)}
+        </div>
+        <div class="stat-label">
+          Участников
+        </div>
+      </div>
+
+      <div class="stat">
+        <div class="stat-value">
+          ${Number(giveaway.tickets || 0)}
+        </div>
+        <div class="stat-label">
+          Тикетов
+        </div>
+      </div>
+
+      <div class="stat">
+        <div class="stat-value">
+          ${Number(giveaway.referrals || 0)}
+        </div>
+        <div class="stat-label">
+          Приглашений
+        </div>
+      </div>
+
+      <div class="stat">
+        <div class="stat-value">
+          ${Number(giveaway.winners_count || 0)}
+        </div>
+        <div class="stat-label">
+          Победителей
+        </div>
+      </div>
+
+    </div>
+
+    <div class="card">
+
+      <div class="muted">
+        Период
+      </div>
+
+      <div style="margin-top:10px;line-height:1.8;font-size:14px;">
+
+        Начало:
+        <b>${escapeHtml(formatDate(giveaway.start_at))}</b>
+
+        <br>
+
+        Окончание:
+        <b>${escapeHtml(formatDate(giveaway.end_at))}</b>
+
+        <br>
+
+        Розыгрыш проведён:
+        <b>${escapeHtml(formatDate(giveaway.drawn_at))}</b>
+
+      </div>
+
+    </div>
+
+    <div class="section-title">
+      🏆 Победители
+    </div>
+
+    ${winnersHtml}
+
+    ${
+      prizesHtml
+        ? `
+          <div class="section-title">
+            🎁 Призы
+          </div>
+
+          ${prizesHtml}
+        `
+        : ''
+    }
+
+    <div class="section-title">
+      Управление
+    </div>
+
+    <button
+      class="primary"
+      onclick="showCreateForm()"
+    >
+      🎁 Создать новый розыгрыш
+    </button>
+  `;
+}
+
+
+function renderEmptyDashboard() {
+
+  content.innerHTML = `
+
+    <div class="card">
+
+      <div class="title">
+        🚗 DRIFT TAXI
+      </div>
+
+      <div class="muted">
+        Сейчас нет активных или завершённых розыгрышей.
+      </div>
+
+    </div>
+
+    <button
+      class="primary"
+      onclick="showCreateForm()"
+    >
+      🎁 Создать новый розыгрыш
+    </button>
+
+  `;
+}
 
 function renderDashboard(data) {
 
@@ -523,17 +729,17 @@ function renderDashboard(data) {
   }
 
 
-  const giveaway =
-    data.giveaway;
+  const giveaway = data.giveaway;
+const finishedGiveaway = data.finishedGiveaway;
 
-
-  if (!giveaway) {
-
-    showCreateForm();
-
-    return;
-
+if (!giveaway) {
+  if (finishedGiveaway) {
+    renderFinishedGiveaway(finishedGiveaway);
+  } else {
+    renderEmptyDashboard();
   }
+  return;
+}
 
 
   const status =
