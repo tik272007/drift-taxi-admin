@@ -357,6 +357,8 @@ let currentScreen = 'dashboard';
 
 let dashboardRefreshTimer = null;
 
+let currentGiveawayId = '';
+
 
 /* ==========================================
    HELPERS
@@ -529,6 +531,8 @@ function showError(error) {
    ========================================== */
 
 function renderFinishedGiveaway(giveaway) {
+
+  currentGiveawayId = '';
 
   currentScreen = 'history-detail';
 
@@ -881,6 +885,29 @@ function renderFinishedGiveaway(giveaway) {
 
 
     <button
+      onclick="refreshActiveGiveaway()"
+    >
+      🔄 Обновить
+    </button>
+
+
+    <button
+      class="primary"
+      onclick="drawActiveFromMiniApp()"
+    >
+      🎲 Провести розыгрыш сейчас
+    </button>
+
+
+    <button
+      onclick="cancelActiveFromMiniApp()"
+      style="background:#3a1717;color:#ff6b63;"
+    >
+      🛑 Остановить без розыгрыша
+    </button>
+
+
+    <button
       onclick="showHistory()"
     >
       📚 История розыгрышей
@@ -1213,6 +1240,8 @@ async function openHistoryGiveaway(
 
 function renderEmptyDashboard() {
 
+  currentGiveawayId = '';
+
   currentScreen =
     'dashboard';
 
@@ -1291,6 +1320,11 @@ function renderDashboard(data) {
 
   const giveaway =
     data.giveaway;
+
+  currentGiveawayId =
+    giveaway && giveaway.giveaway_id
+      ? String(giveaway.giveaway_id)
+      : '';
 
   const finishedGiveaway =
     data.finishedGiveaway;
@@ -1527,6 +1561,148 @@ function renderDashboard(data) {
     </button>
 
   `;
+
+}
+
+
+/* ==========================================
+   УПРАВЛЕНИЕ АКТИВНЫМ РОЗЫГРЫШЕМ
+   ========================================== */
+
+async function refreshActiveGiveaway() {
+
+  await loadDashboard(true);
+
+}
+
+
+async function drawActiveFromMiniApp() {
+
+  const giveawayId =
+    currentGiveawayId;
+
+  if (!giveawayId) {
+
+    tg.showAlert(
+      'Активный розыгрыш не найден.'
+    );
+
+    return;
+
+  }
+
+  const confirmed =
+    confirm(
+      '🎲 Провести розыгрыш сейчас?\n\n' +
+      'После этого будут выбраны победители, ' +
+      'а розыгрыш завершится.'
+    );
+
+  if (!confirmed) {
+    return;
+  }
+
+  try {
+
+    const result =
+      await callApi(
+        'drawGiveaway',
+        {
+          id: giveawayId
+        }
+      );
+
+    if (
+      !result ||
+      result.ok === false
+    ) {
+
+      throw new Error(
+        result && result.error
+          ? result.error
+          : 'Не удалось провести розыгрыш.'
+      );
+
+    }
+
+    tg.showAlert(
+      '🎉 Победители выбраны!'
+    );
+
+    currentGiveawayId = '';
+
+    await loadDashboard(true);
+
+  } catch (error) {
+
+    showError(error);
+
+  }
+
+}
+
+
+async function cancelActiveFromMiniApp() {
+
+  const giveawayId =
+    currentGiveawayId;
+
+  if (!giveawayId) {
+
+    tg.showAlert(
+      'Активный розыгрыш не найден.'
+    );
+
+    return;
+
+  }
+
+  const confirmed =
+    confirm(
+      '🛑 Остановить розыгрыш без выбора победителей?\n\n' +
+      'Он будет завершён как отменённый.'
+    );
+
+  if (!confirmed) {
+    return;
+  }
+
+  try {
+
+    const result =
+      await callApi(
+        'cancelGiveaway',
+        {
+          id: giveawayId
+        }
+      );
+
+    if (
+      !result ||
+      result.ok === false
+    ) {
+
+      throw new Error(
+        result && result.error
+          ? result.error
+          : 'Не удалось остановить розыгрыш.'
+      );
+
+    }
+
+    tg.showAlert(
+      'Розыгрыш остановлен.'
+    );
+
+    currentGiveawayId = '';
+
+    await loadDashboard(true);
+
+  } catch (error) {
+
+    showError(error);
+
+  }
 
 }
 
