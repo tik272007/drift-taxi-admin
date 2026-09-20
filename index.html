@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+
   <meta charset="UTF-8">
 
   <meta
@@ -13,6 +14,7 @@
   <script src="https://telegram.org/js/telegram-web-app.js?63"></script>
 
   <style>
+
     * {
       box-sizing: border-box;
     }
@@ -71,21 +73,34 @@
       line-height: 1.5;
     }
 
-    .success {
-      background: #121f15;
-      border: 1px solid #244b2c;
-      border-radius: 16px;
-      padding: 18px;
-      color: #5be36b;
-      line-height: 1.5;
-    }
-
     .card {
       background: #151516;
       border: 1px solid #29292b;
       border-radius: 22px;
       padding: 20px;
       margin-bottom: 14px;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 30px 20px;
+    }
+
+    .empty-icon {
+      font-size: 45px;
+      margin-bottom: 15px;
+    }
+
+    .empty-title {
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .empty-text {
+      color: #888;
+      line-height: 1.5;
+      font-size: 14px;
     }
 
     .status {
@@ -153,6 +168,67 @@
       text-transform: uppercase;
     }
 
+    label {
+      display: block;
+      color: #aaa;
+      font-size: 13px;
+      margin: 14px 0 7px 3px;
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      border: 1px solid #29292b;
+      border-radius: 15px;
+      background: #101011;
+      color: white;
+      padding: 14px;
+      font-size: 15px;
+      outline: none;
+    }
+
+    textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: #ffd60a;
+    }
+
+    .prize {
+      background: #101011;
+      border: 1px solid #29292b;
+      border-radius: 17px;
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+
+    .prize-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+
+    .prize-number {
+      color: #ffd60a;
+      font-weight: 800;
+    }
+
+    .remove {
+      width: auto;
+      min-height: auto;
+      padding: 5px 9px;
+      margin: 0;
+      background: transparent;
+      color: #ff6b63;
+      font-size: 12px;
+    }
+
     button {
       width: 100%;
       min-height: 54px;
@@ -170,29 +246,57 @@
       color: #111;
     }
 
-    .empty {
-      text-align: center;
-      padding: 35px 20px;
+    button:disabled {
+      opacity: 0.5;
     }
 
-    .empty-icon {
-      font-size: 45px;
-      margin-bottom: 15px;
+    .switch-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 3px;
     }
 
-    .empty-title {
-      font-size: 20px;
-      font-weight: 800;
-      margin-bottom: 8px;
-    }
-
-    .empty-text {
-      color: #888;
-      line-height: 1.5;
+    .switch-text {
       font-size: 14px;
     }
+
+    .switch {
+      width: 50px;
+      height: 30px;
+      margin: 0;
+      appearance: none;
+      background: #333;
+      border-radius: 20px;
+      position: relative;
+      transition: 0.2s;
+      padding: 0;
+    }
+
+    .switch::after {
+      content: "";
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      top: 3px;
+      left: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: 0.2s;
+    }
+
+    .switch:checked {
+      background: #ffd60a;
+    }
+
+    .switch:checked::after {
+      left: 23px;
+    }
+
   </style>
+
 </head>
+
 
 <body>
 
@@ -234,15 +338,8 @@ tg.ready();
 tg.expand();
 
 
-/*
-==================================================
-ВАЖНО
-СЮДА ВСТАВЬ URL ТВОЕГО APPS SCRIPT WEB APP
-==================================================
-*/
-
 const API_URL =
-  'https://script.google.com/macros/s/AKfycbxQ4gTtby8NVLuEieaKttbTjlLcyqQnTMz6KNjAT2JcSIe0PjAHpJfAX0BZAQq001A/exec';
+  'ВСТАВЬ_СЮДА_URL_APPS_SCRIPT';
 
 
 const content =
@@ -290,7 +387,10 @@ function formatDate(value) {
 }
 
 
-async function callApi(api) {
+async function callApi(
+  api,
+  extra = {}
+) {
 
   if (!tg.initData) {
 
@@ -301,20 +401,40 @@ async function callApi(api) {
   }
 
 
-  const url =
-    API_URL +
-    '?api=' +
-    encodeURIComponent(api) +
-    '&initData=' +
-    encodeURIComponent(
-      tg.initData
-    );
+  const params =
+    new URLSearchParams();
+
+
+  params.set(
+    'api',
+    api
+  );
+
+
+  params.set(
+    'initData',
+    tg.initData
+  );
+
+
+  Object.keys(extra).forEach(
+    function(key) {
+
+      params.set(
+        key,
+        extra[key]
+      );
+
+    }
+  );
 
 
   const response =
-    await fetch(url, {
-      method: 'GET'
-    });
+    await fetch(
+      API_URL +
+      '?' +
+      params.toString()
+    );
 
 
   if (!response.ok) {
@@ -359,7 +479,7 @@ function showError(error) {
 
     <div class="error">
 
-      ❌ <b>Ошибка подключения</b>
+      ❌ <b>Ошибка</b>
 
       <br><br>
 
@@ -375,20 +495,7 @@ function showError(error) {
 }
 
 
-function render(data) {
-
-  if (!data) {
-
-    showError(
-      new Error(
-        'Сервер не вернул данные'
-      )
-    );
-
-    return;
-
-  }
-
+function renderDashboard(data) {
 
   if (data.ok === false) {
 
@@ -425,44 +532,7 @@ function render(data) {
 
   if (!giveaway) {
 
-    content.innerHTML = `
-
-      <div class="card empty">
-
-        <div class="empty-icon">
-          🏁
-        </div>
-
-        <div class="empty-title">
-          Нет активного розыгрыша
-        </div>
-
-        <div class="empty-text">
-
-          Сейчас активного розыгрыша нет.
-
-          <br><br>
-
-          Здесь появится управление,
-          когда мы подключим создание
-          нового розыгрыша.
-
-        </div>
-
-      </div>
-
-      <div class="section-title">
-        Управление
-      </div>
-
-      <button
-        class="primary"
-        onclick="comingSoon()"
-      >
-        🎁 Создать розыгрыш
-      </button>
-
-    `;
+    showCreateForm();
 
     return;
 
@@ -502,9 +572,7 @@ function render(data) {
         </div>
 
         <div class="badge">
-          ${escapeHtml(
-            statusText
-          )}
+          ${escapeHtml(statusText)}
         </div>
 
       </div>
@@ -537,62 +605,50 @@ function render(data) {
     <div class="stats">
 
       <div class="stat">
-
         <div class="stat-value">
           ${Number(
             stats.participants || 0
           )}
         </div>
-
         <div class="stat-label">
           Участников
         </div>
-
       </div>
 
 
       <div class="stat">
-
         <div class="stat-value">
           ${Number(
             stats.tickets || 0
           )}
         </div>
-
         <div class="stat-label">
           Тикетов
         </div>
-
       </div>
 
 
       <div class="stat">
-
         <div class="stat-value">
           ${Number(
             stats.referrals || 0
           )}
         </div>
-
         <div class="stat-label">
           Приглашений
         </div>
-
       </div>
 
 
       <div class="stat">
-
         <div class="stat-value">
           ${Number(
             stats.winners || 0
           )}
         </div>
-
         <div class="stat-label">
           Победителей
         </div>
-
       </div>
 
     </div>
@@ -642,30 +698,9 @@ function render(data) {
 
     <button
       class="primary"
-      onclick="comingSoon()"
+      onclick="showCreateForm()"
     >
-      🎁 Управление розыгрышем
-    </button>
-
-
-    <button
-      onclick="comingSoon()"
-    >
-      👥 Участники
-    </button>
-
-
-    <button
-      onclick="comingSoon()"
-    >
-      📤 Рефералы
-    </button>
-
-
-    <button
-      onclick="comingSoon()"
-    >
-      🏆 Победители
+      🎁 Создать новый розыгрыш
     </button>
 
   `;
@@ -673,23 +708,454 @@ function render(data) {
 }
 
 
-function comingSoon() {
+function showCreateForm() {
 
-  tg.showAlert(
-    'Этот раздел подключим следующим шагом.'
+  content.innerHTML = `
+
+    <div class="card">
+
+      <div class="title">
+        🎁 Новый розыгрыш
+      </div>
+
+      <div class="muted">
+        Заполни параметры розыгрыша
+      </div>
+
+
+      <label>
+        Название
+      </label>
+
+      <input
+        id="title"
+        type="text"
+        placeholder="DRIFT TAXI — Розыгрыш"
+      >
+
+
+      <label>
+        Описание
+      </label>
+
+      <textarea
+        id="description"
+        placeholder="Описание розыгрыша"
+      ></textarea>
+
+
+      <label>
+        Начало
+      </label>
+
+      <input
+        id="start"
+        type="datetime-local"
+      >
+
+
+      <label>
+        Окончание
+      </label>
+
+      <input
+        id="end"
+        type="datetime-local"
+      >
+
+
+      <label>
+        Количество победителей
+      </label>
+
+      <input
+        id="winners"
+        type="number"
+        min="1"
+        value="1"
+      >
+
+
+      <div class="switch-row">
+
+        <div class="switch-text">
+          🎲 Автоматически определить победителей
+        </div>
+
+        <input
+          id="autoDraw"
+          class="switch"
+          type="checkbox"
+          checked
+        >
+
+      </div>
+
+
+      <div class="section-title">
+        Призы
+      </div>
+
+
+      <div id="prizes"></div>
+
+
+      <button
+        onclick="addPrize()"
+      >
+        ➕ Добавить приз
+      </button>
+
+
+      <button
+        class="primary"
+        id="createButton"
+        onclick="createGiveaway()"
+      >
+        🚀 Создать розыгрыш
+      </button>
+
+
+      <button
+        onclick="loadDashboard()"
+      >
+        ← Назад
+      </button>
+
+    </div>
+
+  `;
+
+
+  addPrize();
+
+}
+
+
+function addPrize() {
+
+  const container =
+    document.getElementById(
+      'prizes'
+    );
+
+  if (!container) return;
+
+
+  const number =
+    container.children.length + 1;
+
+
+  const div =
+    document.createElement(
+      'div'
+    );
+
+
+  div.className =
+    'prize';
+
+
+  div.innerHTML = `
+
+    <div class="prize-head">
+
+      <div class="prize-number">
+        Приз ${number}
+      </div>
+
+      <button
+        class="remove"
+        onclick="this.parentElement.parentElement.remove()"
+      >
+        Удалить
+      </button>
+
+    </div>
+
+
+    <label>
+      Название приза
+    </label>
+
+    <input
+      class="prize-title"
+      type="text"
+      placeholder="Например: поездка на DRIFT TAXI"
+    >
+
+
+    <label>
+      Описание
+    </label>
+
+    <textarea
+      class="prize-description"
+      placeholder="Описание приза"
+    ></textarea>
+
+  `;
+
+
+  container.appendChild(
+    div
   );
 
 }
 
 
-async function load() {
+async function createGiveaway() {
+
+  const button =
+    document.getElementById(
+      'createButton'
+    );
+
+
+  const title =
+    document.getElementById(
+      'title'
+    ).value.trim();
+
+
+  const description =
+    document.getElementById(
+      'description'
+    ).value.trim();
+
+
+  const start =
+    document.getElementById(
+      'start'
+    ).value;
+
+
+  const end =
+    document.getElementById(
+      'end'
+    ).value;
+
+
+  const winners =
+    Number(
+      document.getElementById(
+        'winners'
+      ).value
+    );
+
+
+  const autoDraw =
+    document.getElementById(
+      'autoDraw'
+    ).checked;
+
+
+  if (!title) {
+
+    tg.showAlert(
+      'Укажи название розыгрыша.'
+    );
+
+    return;
+
+  }
+
+
+  if (!start || !end) {
+
+    tg.showAlert(
+      'Укажи дату и время начала и окончания.'
+    );
+
+    return;
+
+  }
+
+
+  if (
+    new Date(end) <=
+    new Date(start)
+  ) {
+
+    tg.showAlert(
+      'Окончание должно быть позже начала.'
+    );
+
+    return;
+
+  }
+
+
+  if (
+    !winners ||
+    winners < 1
+  ) {
+
+    tg.showAlert(
+      'Количество победителей должно быть не меньше 1.'
+    );
+
+    return;
+
+  }
+
+
+  const prizeElements =
+    document.querySelectorAll(
+      '.prize'
+    );
+
+
+  const prizes = [];
+
+
+  prizeElements.forEach(
+    function(element, index) {
+
+      const prizeTitle =
+        element
+          .querySelector(
+            '.prize-title'
+          )
+          .value
+          .trim();
+
+
+      const prizeDescription =
+        element
+          .querySelector(
+            '.prize-description'
+          )
+          .value
+          .trim();
+
+
+      if (prizeTitle) {
+
+        prizes.push({
+
+          place:
+            index + 1,
+
+          title:
+            prizeTitle,
+
+          description:
+            prizeDescription
+
+        });
+
+      }
+
+    }
+  );
+
+
+  if (!prizes.length) {
+
+    tg.showAlert(
+      'Добавь хотя бы один приз.'
+    );
+
+    return;
+
+  }
+
+
+  const data = {
+
+    title:
+      title,
+
+    description:
+      description,
+
+    start:
+      start,
+
+    end:
+      end,
+
+    winners:
+      winners,
+
+    prizes:
+      prizes,
+
+    autoDraw:
+      autoDraw
+
+  };
+
+
+  try {
+
+    button.disabled =
+      true;
+
+    button.textContent =
+      '⏳ Создаём...';
+
+
+    const result =
+      await callApi(
+        'createGiveaway',
+        {
+          data:
+            JSON.stringify(
+              data
+            )
+        }
+      );
+
+
+    if (
+      !result ||
+      result.ok === false
+    ) {
+
+      throw new Error(
+        result &&
+        result.error
+          ? result.error
+          : 'Не удалось создать розыгрыш'
+      );
+
+    }
+
+
+    tg.showAlert(
+      '🎉 Розыгрыш создан!'
+    );
+
+
+    await loadDashboard();
+
+
+  } catch (error) {
+
+    button.disabled =
+      false;
+
+    button.textContent =
+      '🚀 Создать розыгрыш';
+
+
+    showError(error);
+
+  }
+
+}
+
+
+async function loadDashboard() {
 
   try {
 
     content.innerHTML = `
 
       <div class="loading">
-        🔄 Проверяем доступ...
+        🔄 Загружаем админку...
       </div>
 
     `;
@@ -701,7 +1167,9 @@ async function load() {
       );
 
 
-    render(data);
+    renderDashboard(
+      data
+    );
 
 
   } catch (error) {
@@ -715,7 +1183,7 @@ async function load() {
 }
 
 
-load();
+loadDashboard();
 
 </script>
 
