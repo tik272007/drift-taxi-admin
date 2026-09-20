@@ -2,52 +2,720 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>DRIFT TAXI</title>
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+  >
+
+  <title>DRIFT TAXI — Admin</title>
 
   <script src="https://telegram.org/js/telegram-web-app.js?63"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: #0b0b0c;
+      color: #fff;
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "SF Pro Display",
+        Arial,
+        sans-serif;
+    }
+
+    .app {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 18px 16px 40px;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 22px;
+    }
+
+    .brand {
+      font-size: 22px;
+      font-weight: 800;
+    }
+
+    .brand span {
+      color: #ffd60a;
+    }
+
+    .admin {
+      color: #999;
+      font-size: 13px;
+    }
+
+    .loading {
+      padding: 40px 0;
+      text-align: center;
+      color: #999;
+    }
+
+    .error {
+      background: #241414;
+      border: 1px solid #5a2020;
+      border-radius: 16px;
+      padding: 18px;
+      color: #ff6b63;
+      line-height: 1.5;
+    }
+
+    .success {
+      background: #121f15;
+      border: 1px solid #244b2c;
+      border-radius: 16px;
+      padding: 18px;
+      color: #5be36b;
+      line-height: 1.5;
+    }
+
+    .card {
+      background: #151516;
+      border: 1px solid #29292b;
+      border-radius: 22px;
+      padding: 20px;
+      margin-bottom: 14px;
+    }
+
+    .status {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .muted {
+      color: #888;
+      font-size: 13px;
+    }
+
+    .badge {
+      background: rgba(50, 215, 75, 0.12);
+      color: #32d74b;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .title {
+      font-size: 25px;
+      font-weight: 800;
+      margin-bottom: 7px;
+    }
+
+    .id {
+      color: #666;
+      font-size: 12px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .stat {
+      background: #151516;
+      border: 1px solid #29292b;
+      border-radius: 18px;
+      padding: 16px;
+    }
+
+    .stat-value {
+      font-size: 25px;
+      font-weight: 800;
+    }
+
+    .stat-label {
+      margin-top: 5px;
+      color: #888;
+      font-size: 12px;
+    }
+
+    .section-title {
+      color: #888;
+      font-size: 12px;
+      font-weight: 800;
+      margin: 22px 0 10px 4px;
+      text-transform: uppercase;
+    }
+
+    button {
+      width: 100%;
+      min-height: 54px;
+      margin-bottom: 10px;
+      border: 0;
+      border-radius: 17px;
+      background: #1b1b1d;
+      color: white;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    button.primary {
+      background: #ffd60a;
+      color: #111;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 35px 20px;
+    }
+
+    .empty-icon {
+      font-size: 45px;
+      margin-bottom: 15px;
+    }
+
+    .empty-title {
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .empty-text {
+      color: #888;
+      line-height: 1.5;
+      font-size: 14px;
+    }
+  </style>
 </head>
 
-<body style="
-  margin:0;
-  padding:20px;
-  background:#111;
-  color:white;
-  font-family:Arial,sans-serif;
-">
+<body>
 
-<h2>🚗 DRIFT TAXI Mini App</h2>
+<div class="app">
 
-<pre id="debug">Загрузка...</pre>
+  <div class="header">
+
+    <div class="brand">
+      🚗 DRIFT <span>TAXI</span>
+    </div>
+
+    <div
+      class="admin"
+      id="adminName"
+    >
+      Проверка...
+    </div>
+
+  </div>
+
+
+  <div id="content">
+
+    <div class="loading">
+      🔄 Подключение...
+    </div>
+
+  </div>
+
+</div>
+
 
 <script>
 
-const tg = window.Telegram.WebApp;
+const tg =
+  window.Telegram.WebApp;
 
 tg.ready();
 tg.expand();
 
-document.getElementById('debug').textContent =
-  JSON.stringify({
 
-    href: location.href,
+/*
+==================================================
+ВАЖНО
+СЮДА ВСТАВЬ URL ТВОЕГО APPS SCRIPT WEB APP
+==================================================
+*/
 
-    referrer: document.referrer,
+const API_URL =
+  'https://script.google.com/macros/s/AKfycbxQ4gTtby8NVLuEieaKttbTjlLcyqQnTMz6KNjAT2JcSIe0PjAHpJfAX0BZAQq001A/exec';
 
-    userAgent: navigator.userAgent,
 
-    version: tg.version,
+const content =
+  document.getElementById('content');
 
-    platform: tg.platform,
+const adminName =
+  document.getElementById('adminName');
 
-    initDataLength: tg.initData.length,
 
-    initData: tg.initData,
+function escapeHtml(value) {
 
-    initDataUnsafe: tg.initDataUnsafe
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 
-  }, null, 2);
+}
+
+
+function formatDate(value) {
+
+  if (!value) {
+    return '—';
+  }
+
+  const d =
+    new Date(value);
+
+  if (isNaN(d.getTime())) {
+    return String(value);
+  }
+
+  return d.toLocaleString(
+    'ru-RU',
+    {
+      day: '2-digit',
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    }
+  );
+
+}
+
+
+async function callApi(api) {
+
+  if (!tg.initData) {
+
+    throw new Error(
+      'Telegram initData пуст'
+    );
+
+  }
+
+
+  const url =
+    API_URL +
+    '?api=' +
+    encodeURIComponent(api) +
+    '&initData=' +
+    encodeURIComponent(
+      tg.initData
+    );
+
+
+  const response =
+    await fetch(url, {
+      method: 'GET'
+    });
+
+
+  if (!response.ok) {
+
+    throw new Error(
+      'HTTP ' +
+      response.status
+    );
+
+  }
+
+
+  const text =
+    await response.text();
+
+
+  let data;
+
+  try {
+
+    data =
+      JSON.parse(text);
+
+  } catch (e) {
+
+    throw new Error(
+      'Сервер вернул не JSON:\n' +
+      text.substring(0, 300)
+    );
+
+  }
+
+
+  return data;
+
+}
+
+
+function showError(error) {
+
+  content.innerHTML = `
+
+    <div class="error">
+
+      ❌ <b>Ошибка подключения</b>
+
+      <br><br>
+
+      ${escapeHtml(
+        error.message ||
+        String(error)
+      )}
+
+    </div>
+
+  `;
+
+}
+
+
+function render(data) {
+
+  if (!data) {
+
+    showError(
+      new Error(
+        'Сервер не вернул данные'
+      )
+    );
+
+    return;
+
+  }
+
+
+  if (data.ok === false) {
+
+    showError(
+      new Error(
+        data.error ||
+        'Неизвестная ошибка'
+      )
+    );
+
+    return;
+
+  }
+
+
+  if (data.admin) {
+
+    adminName.textContent =
+      '@' +
+      (
+        data.admin.username ||
+        'admin'
+      );
+
+  }
+
+
+  const giveaway =
+    data.giveaway;
+
+  const stats =
+    data.stats || {};
+
+
+  if (!giveaway) {
+
+    content.innerHTML = `
+
+      <div class="card empty">
+
+        <div class="empty-icon">
+          🏁
+        </div>
+
+        <div class="empty-title">
+          Нет активного розыгрыша
+        </div>
+
+        <div class="empty-text">
+
+          Сейчас активного розыгрыша нет.
+
+          <br><br>
+
+          Здесь появится управление,
+          когда мы подключим создание
+          нового розыгрыша.
+
+        </div>
+
+      </div>
+
+      <div class="section-title">
+        Управление
+      </div>
+
+      <button
+        class="primary"
+        onclick="comingSoon()"
+      >
+        🎁 Создать розыгрыш
+      </button>
+
+    `;
+
+    return;
+
+  }
+
+
+  const status =
+    giveaway.status ||
+    'UNKNOWN';
+
+
+  const statusText = {
+
+    ACTIVE:
+      'АКТИВЕН',
+
+    SCHEDULED:
+      'ЗАПЛАНИРОВАН',
+
+    FINISHED:
+      'ЗАВЕРШЁН',
+
+    CANCELLED:
+      'ОТМЕНЁН'
+
+  }[status] || status;
+
+
+  content.innerHTML = `
+
+    <div class="card">
+
+      <div class="status">
+
+        <div class="muted">
+          Текущий розыгрыш
+        </div>
+
+        <div class="badge">
+          ${escapeHtml(
+            statusText
+          )}
+        </div>
+
+      </div>
+
+
+      <div class="title">
+
+        ${escapeHtml(
+          giveaway.title ||
+          giveaway.name ||
+          'DRIFT TAXI'
+        )}
+
+      </div>
+
+
+      <div class="id">
+
+        ID:
+        ${escapeHtml(
+          giveaway.giveaway_id ||
+          '—'
+        )}
+
+      </div>
+
+    </div>
+
+
+    <div class="stats">
+
+      <div class="stat">
+
+        <div class="stat-value">
+          ${Number(
+            stats.participants || 0
+          )}
+        </div>
+
+        <div class="stat-label">
+          Участников
+        </div>
+
+      </div>
+
+
+      <div class="stat">
+
+        <div class="stat-value">
+          ${Number(
+            stats.tickets || 0
+          )}
+        </div>
+
+        <div class="stat-label">
+          Тикетов
+        </div>
+
+      </div>
+
+
+      <div class="stat">
+
+        <div class="stat-value">
+          ${Number(
+            stats.referrals || 0
+          )}
+        </div>
+
+        <div class="stat-label">
+          Приглашений
+        </div>
+
+      </div>
+
+
+      <div class="stat">
+
+        <div class="stat-value">
+          ${Number(
+            stats.winners || 0
+          )}
+        </div>
+
+        <div class="stat-label">
+          Победителей
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div class="card">
+
+      <div class="muted">
+        Период
+      </div>
+
+      <div style="
+        margin-top:10px;
+        line-height:1.8;
+        font-size:14px;
+      ">
+
+        Начало:
+        <b>
+          ${escapeHtml(
+            formatDate(
+              giveaway.start_at
+            )
+          )}
+        </b>
+
+        <br>
+
+        Окончание:
+        <b>
+          ${escapeHtml(
+            formatDate(
+              giveaway.end_at
+            )
+          )}
+        </b>
+
+      </div>
+
+    </div>
+
+
+    <div class="section-title">
+      Управление
+    </div>
+
+
+    <button
+      class="primary"
+      onclick="comingSoon()"
+    >
+      🎁 Управление розыгрышем
+    </button>
+
+
+    <button
+      onclick="comingSoon()"
+    >
+      👥 Участники
+    </button>
+
+
+    <button
+      onclick="comingSoon()"
+    >
+      📤 Рефералы
+    </button>
+
+
+    <button
+      onclick="comingSoon()"
+    >
+      🏆 Победители
+    </button>
+
+  `;
+
+}
+
+
+function comingSoon() {
+
+  tg.showAlert(
+    'Этот раздел подключим следующим шагом.'
+  );
+
+}
+
+
+async function load() {
+
+  try {
+
+    content.innerHTML = `
+
+      <div class="loading">
+        🔄 Проверяем доступ...
+      </div>
+
+    `;
+
+
+    const data =
+      await callApi(
+        'dashboard'
+      );
+
+
+    render(data);
+
+
+  } catch (error) {
+
+    console.error(error);
+
+    showError(error);
+
+  }
+
+}
+
+
+load();
 
 </script>
 
