@@ -1189,3 +1189,39 @@ loadDashboard();
 
 </body>
 </html>
+
+// ==========================================
+// АВТООБНОВЛЕНИЕ MINI APP
+// ==========================================
+
+let dashboardRefreshTimer = null;
+
+function startDashboardAutoRefresh() {
+
+  // Если таймер уже существует — не создаём второй
+  if (dashboardRefreshTimer) {
+    return;
+  }
+
+  dashboardRefreshTimer =
+    setInterval(async function() {
+
+      try {
+
+        await loadDashboard();
+
+      } catch (err) {
+
+        console.log(
+          'AUTO REFRESH ERROR:',
+          err
+        );
+
+      }
+
+    }, 3000);
+}
+
+
+// Запускаем автообновление
+startDashboardAutoRefresh();
