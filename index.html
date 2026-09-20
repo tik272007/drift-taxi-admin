@@ -500,38 +500,70 @@ function showError(error) {
 
   let winnersHtml = '';
 
-  if (winners.length) {
-    winnersHtml = winners.map(function(winner) {
-      const name =
-        winner.username
-          ? '@' + winner.username
-          : (winner.telegram_id || 'Пользователь');
+if (winners.length) {
 
-      return `
-        <div class="card">
-          <div class="muted">
-            🏆 ${winner.place} место
-          </div>
+  winnersHtml = winners.map(function(winner) {
 
-          <div class="title">
-            ${escapeHtml(name)}
-          </div>
+    const name =
+      winner.username
+        ? '@' + winner.username
+        : (winner.telegram_id || 'Пользователь');
 
-          <div class="id">
-            🎁 ${escapeHtml(winner.prize || 'Приз')}
-          </div>
-        </div>
-      `;
-    }).join('');
-  } else {
-    winnersHtml = `
-      <div class="card">
-        <div class="muted">
-          Победители не записаны.
-        </div>
+    const winnerContent = `
+      <div class="muted">
+        🏆 ${winner.place} место
+      </div>
+
+      <div class="title">
+        ${escapeHtml(name)}
+      </div>
+
+      <div class="id">
+        🎁 ${escapeHtml(winner.prize || 'Приз')}
       </div>
     `;
-  }
+
+    // Если есть username — делаем всю карточку кликабельной
+    if (winner.username) {
+
+      return `
+        <a
+          href="https://t.me/${encodeURIComponent(winner.username)}"
+          target="_blank"
+          style="
+            display:block;
+            text-decoration:none;
+            color:inherit;
+          "
+        >
+          <div class="card" style="cursor:pointer;">
+            ${winnerContent}
+          </div>
+        </a>
+      `;
+
+    }
+
+    // Если username нет — карточка остаётся обычной
+    return `
+      <div class="card">
+        ${winnerContent}
+      </div>
+    `;
+
+  }).join('');
+
+} else {
+
+  winnersHtml = `
+    <div class="card">
+      <div class="muted">
+        Победители не записаны.
+      </div>
+    </div>
+  `;
+
+}
 
   let prizesHtml = '';
 
