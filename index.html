@@ -349,6 +349,19 @@ const adminName =
   document.getElementById('adminName');
 
 
+/* ==========================================
+   СОСТОЯНИЕ ТЕКУЩЕГО ЭКРАНА
+   ========================================== */
+
+let currentScreen = 'dashboard';
+
+let dashboardRefreshTimer = null;
+
+
+/* ==========================================
+   HELPERS
+   ========================================== */
+
 function escapeHtml(value) {
 
   return String(value ?? '')
@@ -386,6 +399,10 @@ function formatDate(value) {
 
 }
 
+
+/* ==========================================
+   API
+   ========================================== */
 
 async function callApi(
   api,
@@ -473,6 +490,10 @@ async function callApi(
 }
 
 
+/* ==========================================
+   ERROR
+   ========================================== */
+
 function showError(error) {
 
   content.innerHTML = `
@@ -490,107 +511,199 @@ function showError(error) {
 
     </div>
 
+    <button
+      class="primary"
+      onclick="loadDashboard(true)"
+      style="margin-top:12px;"
+    >
+      🔄 Повторить
+    </button>
+
   `;
 
 }
 
-  function renderFinishedGiveaway(giveaway) {
-  const winners = giveaway.winners_list || [];
-  const prizes = giveaway.prizes || [];
+
+/* ==========================================
+   FINISHED GIVEAWAY
+   ========================================== */
+
+function renderFinishedGiveaway(giveaway) {
+
+  currentScreen = 'history-detail';
+
+  const winners =
+    giveaway.winners_list || [];
+
+  const prizes =
+    giveaway.prizes || [];
+
+
+  /* ------------------------------------------
+     ПОБЕДИТЕЛИ
+     ------------------------------------------ */
 
   let winnersHtml = '';
 
-if (winners.length) {
 
-  winnersHtml = winners.map(function(winner) {
+  if (winners.length) {
 
-    const name =
-      winner.username
-        ? '@' + winner.username
-        : (winner.telegram_id || 'Пользователь');
+    winnersHtml =
+      winners.map(function(winner) {
 
-    const winnerContent = `
-      <div class="muted">
-        🏆 ${winner.place} место
-      </div>
+        const name =
+          winner.username
+            ? '@' + winner.username
+            : (
+                winner.telegram_id ||
+                'Пользователь'
+              );
 
-      <div class="title">
-        ${escapeHtml(name)}
-      </div>
 
-      <div class="id">
-        🎁 ${escapeHtml(winner.prize || 'Приз')}
-      </div>
-    `;
+        const winnerContent = `
 
-    // Если есть username — делаем всю карточку кликабельной
-    if (winner.username) {
-
-      return `
-        <a
-          href="https://t.me/${encodeURIComponent(winner.username)}"
-          target="_blank"
-          style="
-            display:block;
-            text-decoration:none;
-            color:inherit;
-          "
-        >
-          <div class="card" style="cursor:pointer;">
-            ${winnerContent}
-          </div>
-        </a>
-      `;
-
-    }
-
-    // Если username нет — карточка остаётся обычной
-    return `
-      <div class="card">
-        ${winnerContent}
-      </div>
-    `;
-
-  }).join('');
-
-} else {
-
-  winnersHtml = `
-    <div class="card">
-      <div class="muted">
-        Победители не записаны.
-      </div>
-    </div>
-  `;
-
-}
-
-  let prizesHtml = '';
-
-  if (prizes.length) {
-    prizesHtml = prizes.map(function(prize) {
-      return `
-        <div class="card">
           <div class="muted">
-            ${prize.place} место
+            🏆 ${escapeHtml(
+              winner.place
+            )} место
           </div>
 
           <div class="title">
-            ${escapeHtml(prize.title || 'Приз')}
+            ${escapeHtml(name)}
           </div>
 
-          <div class="muted">
-            ${escapeHtml(prize.description || '')}
+          <div class="id">
+            🎁 ${escapeHtml(
+              winner.prize ||
+              'Приз'
+            )}
           </div>
+
+        `;
+
+
+        /*
+         * Если есть username —
+         * вся карточка становится ссылкой.
+         */
+
+        if (winner.username) {
+
+          return `
+
+            <a
+              href="https://t.me/${encodeURIComponent(
+                winner.username
+              )}"
+              target="_blank"
+              style="
+                display:block;
+                text-decoration:none;
+                color:inherit;
+              "
+            >
+
+              <div
+                class="card"
+                style="cursor:pointer;"
+              >
+                ${winnerContent}
+              </div>
+
+            </a>
+
+          `;
+
+        }
+
+
+        /*
+         * Если username нет —
+         * обычная карточка.
+         */
+
+        return `
+
+          <div class="card">
+            ${winnerContent}
+          </div>
+
+        `;
+
+      }).join('');
+
+  } else {
+
+    winnersHtml = `
+
+      <div class="card">
+
+        <div class="muted">
+          Победители не записаны.
         </div>
-      `;
-    }).join('');
+
+      </div>
+
+    `;
+
   }
 
+
+  /* ------------------------------------------
+     ПРИЗЫ
+     ------------------------------------------ */
+
+  let prizesHtml = '';
+
+
+  if (prizes.length) {
+
+    prizesHtml =
+      prizes.map(function(prize) {
+
+        return `
+
+          <div class="card">
+
+            <div class="muted">
+              ${escapeHtml(
+                prize.place
+              )} место
+            </div>
+
+            <div class="title">
+              ${escapeHtml(
+                prize.title ||
+                'Приз'
+              )}
+            </div>
+
+            <div class="muted">
+              ${escapeHtml(
+                prize.description ||
+                ''
+              )}
+            </div>
+
+          </div>
+
+        `;
+
+      }).join('');
+
+  }
+
+
+  /* ------------------------------------------
+     ЭКРАН
+     ------------------------------------------ */
+
   content.innerHTML = `
+
     <div class="card">
 
       <div class="status">
+
         <div class="muted">
           Последний розыгрыш
         </div>
@@ -598,57 +711,96 @@ if (winners.length) {
         <div class="badge">
           🏁 ЗАВЕРШЁН
         </div>
+
       </div>
+
 
       <div class="title">
-        ${escapeHtml(giveaway.title || 'DRIFT TAXI')}
+        ${escapeHtml(
+          giveaway.title ||
+          'DRIFT TAXI'
+        )}
       </div>
 
+
       <div class="id">
-        ID: ${escapeHtml(giveaway.giveaway_id || '—')}
+        ID:
+        ${escapeHtml(
+          giveaway.giveaway_id ||
+          '—'
+        )}
       </div>
 
     </div>
+
 
     <div class="stats">
 
       <div class="stat">
+
         <div class="stat-value">
-          ${Number(giveaway.participants || 0)}
+          ${Number(
+            giveaway.participants ||
+            0
+          )}
         </div>
+
         <div class="stat-label">
           Участников
         </div>
+
       </div>
 
+
       <div class="stat">
+
         <div class="stat-value">
-          ${Number(giveaway.tickets || 0)}
+          ${Number(
+            giveaway.tickets ||
+            0
+          )}
         </div>
+
         <div class="stat-label">
           Тикетов
         </div>
+
       </div>
 
+
       <div class="stat">
+
         <div class="stat-value">
-          ${Number(giveaway.referrals || 0)}
+          ${Number(
+            giveaway.referrals ||
+            0
+          )}
         </div>
+
         <div class="stat-label">
           Приглашений
         </div>
+
       </div>
 
+
       <div class="stat">
+
         <div class="stat-value">
-          ${Number(giveaway.winners_count || 0)}
+          ${Number(
+            giveaway.winners_count ||
+            0
+          )}
         </div>
+
         <div class="stat-label">
           Победителей
         </div>
+
       </div>
 
     </div>
+
 
     <div class="card">
 
@@ -656,53 +808,84 @@ if (winners.length) {
         Период
       </div>
 
-      <div style="margin-top:10px;line-height:1.8;font-size:14px;">
+      <div
+        style="
+          margin-top:10px;
+          line-height:1.8;
+          font-size:14px;
+        "
+      >
 
         Начало:
-        <b>${escapeHtml(formatDate(giveaway.start_at))}</b>
+        <b>
+          ${escapeHtml(
+            formatDate(
+              giveaway.start_at
+            )
+          )}
+        </b>
 
         <br>
 
         Окончание:
-        <b>${escapeHtml(formatDate(giveaway.end_at))}</b>
+        <b>
+          ${escapeHtml(
+            formatDate(
+              giveaway.end_at
+            )
+          )}
+        </b>
 
         <br>
 
         Розыгрыш проведён:
-        <b>${escapeHtml(formatDate(giveaway.drawn_at))}</b>
+        <b>
+          ${escapeHtml(
+            formatDate(
+              giveaway.drawn_at
+            )
+          )}
+        </b>
 
       </div>
 
     </div>
 
+
     <div class="section-title">
       🏆 Победители
     </div>
 
+
     ${winnersHtml}
+
 
     ${
       prizesHtml
         ? `
+
           <div class="section-title">
             🎁 Призы
           </div>
 
           ${prizesHtml}
+
         `
         : ''
     }
 
+
     <div class="section-title">
       Управление
     </div>
-    
-<button
-  class="secondary"
-  onclick="showHistory()"
->
-  📚 История розыгрышей
-</button>
+
+
+    <button
+      onclick="showHistory()"
+    >
+      📚 История розыгрышей
+    </button>
+
 
     <button
       class="primary"
@@ -710,35 +893,57 @@ if (winners.length) {
     >
       🎁 Создать новый розыгрыш
     </button>
+
   `;
+
 }
 
-  async function showHistory() {
+
+/* ==========================================
+   HISTORY
+   ========================================== */
+
+async function showHistory() {
+
+  currentScreen = 'history';
+
 
   content.innerHTML = `
+
     <div class="loading">
       🔄 Загружаем историю...
     </div>
+
   `;
+
 
   try {
 
     const data =
-      await callApi('history');
+      await callApi(
+        'history'
+      );
+
 
     if (
       !data ||
       data.ok === false
     ) {
+
       throw new Error(
-        data.error ||
-        'Не удалось загрузить историю'
+        data &&
+        data.error
+          ? data.error
+          : 'Не удалось загрузить историю'
       );
+
     }
+
 
     renderHistory(
       data.history || []
     );
+
 
   } catch (error) {
 
@@ -747,9 +952,14 @@ if (winners.length) {
     showError(error);
 
   }
+
 }
 
+
 function renderHistory(history) {
+
+  currentScreen = 'history';
+
 
   if (!history.length) {
 
@@ -767,9 +977,10 @@ function renderHistory(history) {
 
       </div>
 
+
       <button
         class="primary"
-        onclick="loadDashboard(false)"
+        onclick="loadDashboard(true)"
       >
         ← Назад
       </button>
@@ -777,101 +988,127 @@ function renderHistory(history) {
     `;
 
     return;
+
   }
+
 
   let html = '';
 
-  history.forEach(function(giveaway) {
 
-    html += `
+  history.forEach(
+    function(giveaway) {
 
-      <div
-        class="card"
-        onclick="openHistoryGiveaway('${escapeHtml(giveaway.giveaway_id)}')"
-        style="
-          cursor:pointer;
-          margin-bottom:12px;
-        "
-      >
-
-        <div class="status">
-
-          <div class="muted">
-            🏁 Завершён
-          </div>
-
-          <div class="badge">
-            РЕЗУЛЬТАТЫ
-          </div>
-
-        </div>
-
-        <div class="title">
-          ${escapeHtml(
-            giveaway.title ||
-            'DRIFT TAXI'
-          )}
-        </div>
-
-        <div class="id">
-          ID:
-          ${escapeHtml(
-            giveaway.giveaway_id
-          )}
-        </div>
+      html += `
 
         <div
+          class="card"
+          onclick="openHistoryGiveaway('${String(
+            giveaway.giveaway_id
+          ).replace(/'/g, "\\'")}')"
           style="
-            margin-top:12px;
-            display:grid;
-            grid-template-columns:1fr 1fr;
-            gap:8px;
+            cursor:pointer;
+            margin-bottom:12px;
           "
         >
 
-          <div class="muted">
-            👥 ${Number(
-              giveaway.participants || 0
-            )} участников
+          <div class="status">
+
+            <div class="muted">
+              🏁 Завершён
+            </div>
+
+            <div class="badge">
+              РЕЗУЛЬТАТЫ
+            </div>
+
           </div>
 
-          <div class="muted">
-            🎟 ${Number(
-              giveaway.tickets || 0
-            )} тикетов
+
+          <div class="title">
+
+            ${escapeHtml(
+              giveaway.title ||
+              'DRIFT TAXI'
+            )}
+
           </div>
 
-          <div class="muted">
-            📤 ${Number(
-              giveaway.referrals || 0
-            )} приглашений
+
+          <div class="id">
+
+            ID:
+            ${escapeHtml(
+              giveaway.giveaway_id ||
+              '—'
+            )}
+
           </div>
 
-          <div class="muted">
-            🏆 ${Number(
-              giveaway.winners_count || 0
-            )} победителей
+
+          <div
+            style="
+              margin-top:12px;
+              display:grid;
+              grid-template-columns:1fr 1fr;
+              gap:8px;
+            "
+          >
+
+            <div class="muted">
+              👥 ${Number(
+                giveaway.participants ||
+                0
+              )} участников
+            </div>
+
+
+            <div class="muted">
+              🎟 ${Number(
+                giveaway.tickets ||
+                0
+              )} тикетов
+            </div>
+
+
+            <div class="muted">
+              📤 ${Number(
+                giveaway.referrals ||
+                0
+              )} приглашений
+            </div>
+
+
+            <div class="muted">
+              🏆 ${Number(
+                giveaway.winners_count ||
+                0
+              )} победителей
+            </div>
+
+          </div>
+
+
+          <div
+            class="muted"
+            style="margin-top:12px;"
+          >
+
+            ${escapeHtml(
+              formatDate(
+                giveaway.drawn_at ||
+                giveaway.end_at
+              )
+            )}
+
           </div>
 
         </div>
 
-        <div
-          class="muted"
-          style="margin-top:12px;"
-        >
-          ${escapeHtml(
-            formatDate(
-              giveaway.drawn_at ||
-              giveaway.end_at
-            )
-          )}
-        </div>
+      `;
 
-      </div>
+    }
+  );
 
-    `;
-
-  });
 
   content.innerHTML = `
 
@@ -890,25 +1127,42 @@ function renderHistory(history) {
 
     </div>
 
+
     ${html}
+
 
     <button
       class="primary"
-      onclick="loadDashboard(false)"
+      onclick="loadDashboard(true)"
     >
       ← Назад
     </button>
 
   `;
+
 }
 
-async function openHistoryGiveaway(giveawayId) {
+
+/* ==========================================
+   OPEN HISTORY GIVEAWAY
+   ========================================== */
+
+async function openHistoryGiveaway(
+  giveawayId
+) {
+
+  currentScreen =
+    'history-detail';
+
 
   content.innerHTML = `
+
     <div class="loading">
       🔄 Загружаем результаты...
     </div>
+
   `;
+
 
   try {
 
@@ -916,23 +1170,31 @@ async function openHistoryGiveaway(giveawayId) {
       await callApi(
         'giveaway',
         {
-          id: giveawayId
+          id:
+            giveawayId
         }
       );
+
 
     if (
       !data ||
       data.ok === false
     ) {
+
       throw new Error(
-        data.error ||
-        'Не удалось загрузить розыгрыш'
+        data &&
+        data.error
+          ? data.error
+          : 'Не удалось загрузить розыгрыш'
       );
+
     }
+
 
     renderFinishedGiveaway(
       data.giveaway
     );
+
 
   } catch (error) {
 
@@ -944,7 +1206,16 @@ async function openHistoryGiveaway(giveawayId) {
 
 }
 
+
+/* ==========================================
+   EMPTY DASHBOARD
+   ========================================== */
+
 function renderEmptyDashboard() {
+
+  currentScreen =
+    'dashboard';
+
 
   content.innerHTML = `
 
@@ -960,6 +1231,7 @@ function renderEmptyDashboard() {
 
     </div>
 
+
     <button
       class="primary"
       onclick="showCreateForm()"
@@ -968,9 +1240,19 @@ function renderEmptyDashboard() {
     </button>
 
   `;
+
 }
 
+
+/* ==========================================
+   DASHBOARD
+   ========================================== */
+
 function renderDashboard(data) {
+
+  currentScreen =
+    'dashboard';
+
 
   if (data.ok === false) {
 
@@ -986,30 +1268,61 @@ function renderDashboard(data) {
   }
 
 
-  if (data.admin) {
+  /* ------------------------------------------
+     АДМИНИСТРАТОР
+     ------------------------------------------ */
+
+  if (data.user) {
 
     adminName.textContent =
-      '@' +
-      (
-        data.admin.username ||
-        'admin'
+      data.user.username
+        ? '@' + data.user.username
+        : (
+            data.user.first_name ||
+            'admin'
+          );
+
+  }
+
+
+  /* ------------------------------------------
+     АКТИВНЫЙ / ЗАВЕРШЁННЫЙ
+     ------------------------------------------ */
+
+  const giveaway =
+    data.giveaway;
+
+  const finishedGiveaway =
+    data.finishedGiveaway;
+
+
+  /*
+   * Если активного нет,
+   * показываем последний завершённый.
+   */
+
+  if (!giveaway) {
+
+    if (finishedGiveaway) {
+
+      renderFinishedGiveaway(
+        finishedGiveaway
       );
 
+    } else {
+
+      renderEmptyDashboard();
+
+    }
+
+    return;
+
   }
 
 
-  const giveaway = data.giveaway;
-const finishedGiveaway = data.finishedGiveaway;
-
-if (!giveaway) {
-  if (finishedGiveaway) {
-    renderFinishedGiveaway(finishedGiveaway);
-  } else {
-    renderEmptyDashboard();
-  }
-  return;
-}
-
+  /* ------------------------------------------
+     СТАТУС
+     ------------------------------------------ */
 
   const status =
     giveaway.status ||
@@ -1030,8 +1343,14 @@ if (!giveaway) {
     CANCELLED:
       'ОТМЕНЁН'
 
-  }[status] || status;
+  }[
+    status
+  ] || status;
 
+
+  /* ------------------------------------------
+     DASHBOARD
+     ------------------------------------------ */
 
   content.innerHTML = `
 
@@ -1044,7 +1363,9 @@ if (!giveaway) {
         </div>
 
         <div class="badge">
-          ${escapeHtml(statusText)}
+          ${escapeHtml(
+            statusText
+          )}
         </div>
 
       </div>
@@ -1077,50 +1398,66 @@ if (!giveaway) {
     <div class="stats">
 
       <div class="stat">
+
         <div class="stat-value">
           ${Number(
-            giveaway.participants || 0
+            giveaway.participants ||
+            0
           )}
         </div>
+
         <div class="stat-label">
           Участников
         </div>
+
       </div>
 
 
       <div class="stat">
+
         <div class="stat-value">
           ${Number(
-            giveaway.tickets || 0
+            giveaway.tickets ||
+            0
           )}
         </div>
+
         <div class="stat-label">
           Тикетов
         </div>
+
       </div>
 
 
       <div class="stat">
+
         <div class="stat-value">
           ${Number(
-            giveaway.referrals || 0
+            giveaway.referrals ||
+            0
           )}
         </div>
+
         <div class="stat-label">
           Приглашений
         </div>
+
       </div>
 
 
       <div class="stat">
+
         <div class="stat-value">
           ${Number(
-            giveaway.winners_count || 0
+            giveaway.winners_count ||
+            0
           )}
         </div>
+
         <div class="stat-label">
           Победителей
         </div>
+
       </div>
 
     </div>
@@ -1132,13 +1469,17 @@ if (!giveaway) {
         Период
       </div>
 
-      <div style="
-        margin-top:10px;
-        line-height:1.8;
-        font-size:14px;
-      ">
+
+      <div
+        style="
+          margin-top:10px;
+          line-height:1.8;
+          font-size:14px;
+        "
+      >
 
         Начало:
+
         <b>
           ${escapeHtml(
             formatDate(
@@ -1147,9 +1488,12 @@ if (!giveaway) {
           )}
         </b>
 
+
         <br>
 
+
         Окончание:
+
         <b>
           ${escapeHtml(
             formatDate(
@@ -1169,6 +1513,13 @@ if (!giveaway) {
 
 
     <button
+      onclick="showHistory()"
+    >
+      📚 История розыгрышей
+    </button>
+
+
+    <button
       class="primary"
       onclick="showCreateForm()"
     >
@@ -1180,7 +1531,15 @@ if (!giveaway) {
 }
 
 
+/* ==========================================
+   CREATE FORM
+   ========================================== */
+
 function showCreateForm() {
+
+  currentScreen =
+    'create';
+
 
   content.innerHTML = `
 
@@ -1199,6 +1558,7 @@ function showCreateForm() {
         Название
       </label>
 
+
       <input
         id="title"
         type="text"
@@ -1210,6 +1570,7 @@ function showCreateForm() {
         Описание
       </label>
 
+
       <textarea
         id="description"
         placeholder="Описание розыгрыша"
@@ -1219,6 +1580,7 @@ function showCreateForm() {
       <label>
         Начало
       </label>
+
 
       <input
         id="start"
@@ -1230,6 +1592,7 @@ function showCreateForm() {
         Окончание
       </label>
 
+
       <input
         id="end"
         type="datetime-local"
@@ -1239,6 +1602,7 @@ function showCreateForm() {
       <label>
         Количество победителей
       </label>
+
 
       <input
         id="winners"
@@ -1253,6 +1617,7 @@ function showCreateForm() {
         <div class="switch-text">
           🎲 Автоматически определить победителей
         </div>
+
 
         <input
           id="autoDraw"
@@ -1289,7 +1654,7 @@ function showCreateForm() {
 
 
       <button
-        onclick="loadDashboard()"
+        onclick="loadDashboard(true)"
       >
         ← Назад
       </button>
@@ -1304,6 +1669,10 @@ function showCreateForm() {
 }
 
 
+/* ==========================================
+   ADD PRIZE
+   ========================================== */
+
 function addPrize() {
 
   const container =
@@ -1311,11 +1680,15 @@ function addPrize() {
       'prizes'
     );
 
-  if (!container) return;
+
+  if (!container) {
+    return;
+  }
 
 
   const number =
-    container.children.length + 1;
+    container.children.length +
+    1;
 
 
   const div =
@@ -1336,9 +1709,14 @@ function addPrize() {
         Приз ${number}
       </div>
 
+
       <button
         class="remove"
-        onclick="this.parentElement.parentElement.remove()"
+        onclick="
+          this.parentElement
+            .parentElement
+            .remove()
+        "
       >
         Удалить
       </button>
@@ -1350,6 +1728,7 @@ function addPrize() {
       Название приза
     </label>
 
+
     <input
       class="prize-title"
       type="text"
@@ -1360,6 +1739,7 @@ function addPrize() {
     <label>
       Описание
     </label>
+
 
     <textarea
       class="prize-description"
@@ -1375,6 +1755,10 @@ function addPrize() {
 
 }
 
+
+/* ==========================================
+   CREATE GIVEAWAY
+   ========================================== */
 
 async function createGiveaway() {
 
@@ -1421,6 +1805,10 @@ async function createGiveaway() {
       'autoDraw'
     ).checked;
 
+
+  /* ------------------------------------------
+     ПРОВЕРКИ
+     ------------------------------------------ */
 
   if (!title) {
 
@@ -1472,6 +1860,10 @@ async function createGiveaway() {
   }
 
 
+  /* ------------------------------------------
+     ПРИЗЫ
+     ------------------------------------------ */
+
   const prizeElements =
     document.querySelectorAll(
       '.prize'
@@ -1482,7 +1874,10 @@ async function createGiveaway() {
 
 
   prizeElements.forEach(
-    function(element, index) {
+    function(
+      element,
+      index
+    ) {
 
       const prizeTitle =
         element
@@ -1534,6 +1929,10 @@ async function createGiveaway() {
   }
 
 
+  /* ------------------------------------------
+     DATA
+     ------------------------------------------ */
+
   const data = {
 
     title:
@@ -1560,10 +1959,15 @@ async function createGiveaway() {
   };
 
 
+  /* ------------------------------------------
+     SEND
+     ------------------------------------------ */
+
   try {
 
     button.disabled =
       true;
+
 
     button.textContent =
       '⏳ Создаём...';
@@ -1601,13 +2005,14 @@ async function createGiveaway() {
     );
 
 
-    await loadDashboard();
+    await loadDashboard(true);
 
 
   } catch (error) {
 
     button.disabled =
       false;
+
 
     button.textContent =
       '🚀 Создать розыгрыш';
@@ -1620,7 +2025,30 @@ async function createGiveaway() {
 }
 
 
-async function loadDashboard(showLoading = true) {
+/* ==========================================
+   LOAD DASHBOARD
+   ========================================== */
+
+async function loadDashboard(
+  showLoading = true
+) {
+
+  /*
+   * Если пользователь сейчас находится
+   * в истории или в форме создания,
+   * автоматический refresh не должен
+   * перерисовывать экран.
+   */
+
+  if (
+    !showLoading &&
+    currentScreen !== 'dashboard'
+  ) {
+
+    return;
+
+  }
+
 
   try {
 
@@ -1652,10 +2080,16 @@ async function loadDashboard(showLoading = true) {
 
     console.error(error);
 
-    // При автообновлении не уничтожаем уже показанную
-    // рабочую админку из-за кратковременной ошибки сети.
+
+    /*
+     * При автообновлении не уничтожаем
+     * уже рабочую админку.
+     */
+
     if (showLoading) {
+
       showError(error);
+
     }
 
   }
@@ -1663,46 +2097,88 @@ async function loadDashboard(showLoading = true) {
 }
 
 
-// ==========================================
-// АВТООБНОВЛЕНИЕ MINI APP
-// ==========================================
-
-let dashboardRefreshTimer = null;
+/* ==========================================
+   AUTO REFRESH
+   ========================================== */
 
 function startDashboardAutoRefresh() {
 
   if (dashboardRefreshTimer) {
+
     return;
+
   }
 
+
   dashboardRefreshTimer =
-    setInterval(function() {
+    setInterval(
+      function() {
 
-      loadDashboard(false);
+        /*
+         * Автообновляем только главный
+         * экран Dashboard.
+         *
+         * История, результаты и форма
+         * создания не перерисовываются.
+         */
 
-    }, 3000);
+        if (
+          currentScreen !==
+          'dashboard'
+        ) {
+
+          return;
+
+        }
+
+
+        loadDashboard(false);
+
+      },
+      3000
+    );
+
 }
 
 
-// ==========================================
-// ПЕРВИЧНАЯ ЗАГРУЗКА
-// ==========================================
+/* ==========================================
+   FIRST LOAD
+   ========================================== */
 
 loadDashboard(true);
+
 startDashboardAutoRefresh();
 
 
-// ==========================================
-// ОБНОВЛЕНИЕ ПРИ ВОЗВРАТЕ В MINI APP
-// ==========================================
+/* ==========================================
+   RETURN TO MINI APP
+   ========================================== */
 
-document.addEventListener('visibilitychange', function() {
+document.addEventListener(
+  'visibilitychange',
+  function() {
 
-  if (!document.hidden) {
-    loadDashboard(false);
+    if (!document.hidden) {
+
+      /*
+       * Если вернулись именно
+       * на главный экран —
+       * обновляем его.
+       */
+
+      if (
+        currentScreen ===
+        'dashboard'
+      ) {
+
+        loadDashboard(false);
+
+      }
+
+    }
+
   }
-
-});
+);
 
 </script>
 
