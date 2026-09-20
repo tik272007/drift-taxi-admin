@@ -1,2227 +1,622 @@
 <!DOCTYPE html>
 <html>
 <head>
-
-  <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-  >
-
-  <title>DRIFT TAXI — Admin</title>
-
-  <script src="https://telegram.org/js/telegram-web-app.js?63"></script>
-
-  <style>
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      background: #0b0b0c;
-      color: #fff;
-      font-family:
-        -apple-system,
-        BlinkMacSystemFont,
-        "SF Pro Display",
-        Arial,
-        sans-serif;
-    }
-
-    .app {
-      max-width: 700px;
-      margin: 0 auto;
-      padding: 18px 16px 40px;
-    }
-
-    .header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 22px;
-    }
-
-    .brand {
-      font-size: 22px;
-      font-weight: 800;
-    }
-
-    .brand span {
-      color: #ffd60a;
-    }
-
-    .admin {
-      color: #999;
-      font-size: 13px;
-    }
-
-    .loading {
-      padding: 40px 0;
-      text-align: center;
-      color: #999;
-    }
-
-    .error {
-      background: #241414;
-      border: 1px solid #5a2020;
-      border-radius: 16px;
-      padding: 18px;
-      color: #ff6b63;
-      line-height: 1.5;
-    }
-
-    .card {
-      background: #151516;
-      border: 1px solid #29292b;
-      border-radius: 22px;
-      padding: 20px;
-      margin-bottom: 14px;
-    }
-
-    .empty {
-      text-align: center;
-      padding: 30px 20px;
-    }
-
-    .empty-icon {
-      font-size: 45px;
-      margin-bottom: 15px;
-    }
-
-    .empty-title {
-      font-size: 20px;
-      font-weight: 800;
-      margin-bottom: 8px;
-    }
-
-    .empty-text {
-      color: #888;
-      line-height: 1.5;
-      font-size: 14px;
-    }
-
-    .status {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 15px;
-    }
-
-    .muted {
-      color: #888;
-      font-size: 13px;
-    }
-
-    .badge {
-      background: rgba(50, 215, 75, 0.12);
-      color: #32d74b;
-      padding: 6px 10px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 800;
-    }
-
-    .title {
-      font-size: 25px;
-      font-weight: 800;
-      margin-bottom: 7px;
-    }
-
-    .id {
-      color: #666;
-      font-size: 12px;
-    }
-
-    .stats {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-bottom: 14px;
-    }
-
-    .stat {
-      background: #151516;
-      border: 1px solid #29292b;
-      border-radius: 18px;
-      padding: 16px;
-    }
-
-    .stat-value {
-      font-size: 25px;
-      font-weight: 800;
-    }
-
-    .stat-label {
-      margin-top: 5px;
-      color: #888;
-      font-size: 12px;
-    }
-
-    .section-title {
-      color: #888;
-      font-size: 12px;
-      font-weight: 800;
-      margin: 22px 0 10px 4px;
-      text-transform: uppercase;
-    }
-
-    label {
-      display: block;
-      color: #aaa;
-      font-size: 13px;
-      margin: 14px 0 7px 3px;
-    }
-
-    input,
-    textarea,
-    select {
-      width: 100%;
-      border: 1px solid #29292b;
-      border-radius: 15px;
-      background: #101011;
-      color: white;
-      padding: 14px;
-      font-size: 15px;
-      outline: none;
-    }
-
-    textarea {
-      min-height: 80px;
-      resize: vertical;
-    }
-
-    input:focus,
-    textarea:focus,
-    select:focus {
-      border-color: #ffd60a;
-    }
-
-    .prize {
-      background: #101011;
-      border: 1px solid #29292b;
-      border-radius: 17px;
-      padding: 14px;
-      margin-bottom: 10px;
-    }
-
-    .prize-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 5px;
-    }
-
-    .prize-number {
-      color: #ffd60a;
-      font-weight: 800;
-    }
-
-    .remove {
-      width: auto;
-      min-height: auto;
-      padding: 5px 9px;
-      margin: 0;
-      background: transparent;
-      color: #ff6b63;
-      font-size: 12px;
-    }
-
-    button {
-      width: 100%;
-      min-height: 54px;
-      margin-bottom: 10px;
-      border: 0;
-      border-radius: 17px;
-      background: #1b1b1d;
-      color: white;
-      font-size: 15px;
-      font-weight: 700;
-    }
-
-    button.primary {
-      background: #ffd60a;
-      color: #111;
-    }
-
-    button:disabled {
-      opacity: 0.5;
-    }
-
-    .switch-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px 3px;
-    }
-
-    .switch-text {
-      font-size: 14px;
-    }
-
-    .switch {
-      width: 50px;
-      height: 30px;
-      margin: 0;
-      appearance: none;
-      background: #333;
-      border-radius: 20px;
-      position: relative;
-      transition: 0.2s;
-      padding: 0;
-    }
-
-    .switch::after {
-      content: "";
-      position: absolute;
-      width: 24px;
-      height: 24px;
-      top: 3px;
-      left: 3px;
-      background: white;
-      border-radius: 50%;
-      transition: 0.2s;
-    }
-
-    .switch:checked {
-      background: #ffd60a;
-    }
-
-    .switch:checked::after {
-      left: 23px;
-    }
-
-  </style>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>DRIFT TAXI — Admin</title>
+<script src="https://telegram.org/js/telegram-web-app.js?63"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0b0b0c;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Arial,sans-serif}
+.app{max-width:700px;margin:0 auto;padding:18px 16px 40px}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
+.brand{font-size:22px;font-weight:800}.brand span{color:#ffd60a}.admin{color:#999;font-size:13px}
+.loading{padding:40px 0;text-align:center;color:#999}
+.error{background:#241414;border:1px solid #5a2020;border-radius:16px;padding:18px;color:#ff6b63;line-height:1.5}
+.card{background:#151516;border:1px solid #29292b;border-radius:22px;padding:20px;margin-bottom:14px}
+.empty{text-align:center;padding:30px 20px}.empty-icon{font-size:45px;margin-bottom:15px}
+.empty-title{font-size:20px;font-weight:800;margin-bottom:8px}.empty-text{color:#888;line-height:1.5;font-size:14px}
+.status{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
+.muted{color:#888;font-size:13px}.badge{background:rgba(50,215,75,.12);color:#32d74b;padding:6px 10px;border-radius:999px;font-size:11px;font-weight:800}
+.title{font-size:25px;font-weight:800;margin-bottom:7px}.id{color:#666;font-size:12px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.stat{background:#151516;border:1px solid #29292b;border-radius:18px;padding:16px}
+.stat-value{font-size:25px;font-weight:800}.stat-label{margin-top:5px;color:#888;font-size:12px}
+.section-title{color:#888;font-size:12px;font-weight:800;margin:22px 0 10px 4px;text-transform:uppercase}
+label{display:block;color:#aaa;font-size:13px;margin:14px 0 7px 3px}
+input,textarea,select{width:100%;border:1px solid #29292b;border-radius:15px;background:#101011;color:white;padding:14px;font-size:15px;outline:none}
+textarea{min-height:80px;resize:vertical}input:focus,textarea:focus,select:focus{border-color:#ffd60a}
+.prize{background:#101011;border:1px solid #29292b;border-radius:17px;padding:14px;margin-bottom:10px}
+.prize-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.prize-number{color:#ffd60a;font-weight:800}.remove{width:auto;min-height:auto;padding:5px 9px;margin:0;background:transparent;color:#ff6b63;font-size:12px}
+button{width:100%;min-height:54px;margin-bottom:10px;border:0;border-radius:17px;background:#1b1b1d;color:white;font-size:15px;font-weight:700}
+button.primary{background:#ffd60a;color:#111}button:disabled{opacity:.5}
+.switch-row{display:flex;align-items:center;justify-content:space-between;padding:14px 3px}.switch-text{font-size:14px}
+.switch{width:50px;height:30px;margin:0;appearance:none;background:#333;border-radius:20px;position:relative;transition:.2s;padding:0}
+.switch::after{content:"";position:absolute;width:24px;height:24px;top:3px;left:3px;background:white;border-radius:50%;transition:.2s}
+.switch:checked{background:#ffd60a}.switch:checked::after{left:23px}
+</style>
 </head>
-
-
 <body>
-
 <div class="app">
-
   <div class="header">
-
-    <div class="brand">
-      🚗 DRIFT <span>TAXI</span>
-    </div>
-
-    <div
-      class="admin"
-      id="adminName"
-    >
-      Проверка...
-    </div>
-
+    <div class="brand">🚗 DRIFT <span>TAXI</span></div>
+    <div class="admin" id="adminName">Проверка...</div>
   </div>
-
-
-  <div id="content">
-
-    <div class="loading">
-      🔄 Подключение...
-    </div>
-
-  </div>
-
+  <div id="content"><div class="loading">🔄 Подключение...</div></div>
 </div>
 
-
 <script>
-
-const tg =
-  window.Telegram.WebApp;
-
+const tg = window.Telegram.WebApp;
 tg.ready();
 tg.expand();
 
+const API_URL = 'https://script.google.com/macros/s/AKfycbxQ4gTtby8NVLuEieaKttbTjlLcyqQnTMz6KNjAT2JcSIe0PjAHpJfAX0BZAQq001A/exec';
 
-const API_URL =
-  'https://script.google.com/macros/s/AKfycbxQ4gTtby8NVLuEieaKttbTjlLcyqQnTMz6KNjAT2JcSIe0PjAHpJfAX0BZAQq001A/exec';
-
-
-const content =
-  document.getElementById('content');
-
-const adminName =
-  document.getElementById('adminName');
-
-
-/* ==========================================
-   СОСТОЯНИЕ ТЕКУЩЕГО ЭКРАНА
-   ========================================== */
+const content = document.getElementById('content');
+const adminName = document.getElementById('adminName');
 
 let currentScreen = 'dashboard';
-
 let dashboardRefreshTimer = null;
 let dashboardRequestId = 0;
-
+let dashboardLoading = false;
 let currentGiveawayId = '';
 
-
-/* ==========================================
-   HELPERS
-   ========================================== */
-
 function escapeHtml(value) {
-
   return String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+    .replace(/'/g,'&#039;');
 }
-
 
 function formatDate(value) {
-
-  if (!value) {
-    return '—';
-  }
-
-  const d =
-    new Date(value);
-
-  if (isNaN(d.getTime())) {
-    return String(value);
-  }
-
-  return d.toLocaleString(
-    'ru-RU',
-    {
-      day: '2-digit',
-      month: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    }
-  );
-
+  if (!value) return '—';
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return String(value);
+  return d.toLocaleString('ru-RU',{
+    day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'
+  });
 }
 
+async function callApi(api, extra = {}) {
+  if (!tg.initData) throw new Error('Telegram initData пуст');
 
-/* ==========================================
-   API
-   ========================================== */
+  const params = new URLSearchParams();
+  params.set('api', api);
+  params.set('initData', tg.initData);
 
-async function callApi(
-  api,
-  extra = {}
-) {
+  Object.keys(extra).forEach(function(key) {
+    params.set(key, extra[key]);
+  });
 
-  if (!tg.initData) {
+  const response = await fetch(API_URL + '?' + params.toString());
 
-    throw new Error(
-      'Telegram initData пуст'
-    );
+  if (!response.ok) throw new Error('HTTP ' + response.status);
 
-  }
-
-
-  const params =
-    new URLSearchParams();
-
-
-  params.set(
-    'api',
-    api
-  );
-
-
-  params.set(
-    'initData',
-    tg.initData
-  );
-
-
-  Object.keys(extra).forEach(
-    function(key) {
-
-      params.set(
-        key,
-        extra[key]
-      );
-
-    }
-  );
-
-
-  const response =
-    await fetch(
-      API_URL +
-      '?' +
-      params.toString()
-    );
-
-
-  if (!response.ok) {
-
-    throw new Error(
-      'HTTP ' +
-      response.status
-    );
-
-  }
-
-
-  const text =
-    await response.text();
-
-
+  const text = await response.text();
   let data;
-
   try {
-
-    data =
-      JSON.parse(text);
-
+    data = JSON.parse(text);
   } catch (e) {
-
-    throw new Error(
-      'Сервер вернул не JSON:\n' +
-      text.substring(0, 300)
-    );
-
+    throw new Error('Сервер вернул не JSON:\n' + text.substring(0,300));
   }
-
-
   return data;
-
 }
-
-
-/* ==========================================
-   ERROR
-   ========================================== */
 
 function showError(error) {
-
   content.innerHTML = `
-
     <div class="error">
-
-      ❌ <b>Ошибка</b>
-
-      <br><br>
-
-      ${escapeHtml(
-        error.message ||
-        String(error)
-      )}
-
+      ❌ <b>Ошибка</b><br><br>
+      ${escapeHtml(error.message || String(error))}
     </div>
-
-    <button
-      class="primary"
-      onclick="loadDashboard(true)"
-      style="margin-top:12px;"
-    >
+    <button class="primary" onclick="loadDashboard(true)" style="margin-top:12px;">
       🔄 Повторить
     </button>
-
   `;
-
 }
 
-
-/* ==========================================
-   FINISHED GIVEAWAY
-   ========================================== */
-
 function renderFinishedGiveaway(giveaway) {
-
   currentGiveawayId = '';
-
   currentScreen = 'history-detail';
-
   dashboardRequestId++;
 
-  const winners =
-    giveaway.winners_list || [];
-
-  const prizes =
-    giveaway.prizes || [];
-
-
-  /* ------------------------------------------
-     ПОБЕДИТЕЛИ
-     ------------------------------------------ */
+  const winners = giveaway.winners_list || [];
+  const prizes = giveaway.prizes || [];
 
   let winnersHtml = '';
 
-
   if (winners.length) {
+    winnersHtml = winners.map(function(winner) {
+      const name = winner.username
+        ? '@' + winner.username
+        : (winner.telegram_id || 'Пользователь');
 
-    winnersHtml =
-      winners.map(function(winner) {
+      const winnerContent = `
+        <div class="muted">🏆 ${escapeHtml(winner.place)} место</div>
+        <div class="title">${escapeHtml(name)}</div>
+        <div class="id">🎁 ${escapeHtml(winner.prize || 'Приз')}</div>
+      `;
 
-        const name =
-          winner.username
-            ? '@' + winner.username
-            : (
-                winner.telegram_id ||
-                'Пользователь'
-              );
-
-
-        const winnerContent = `
-
-          <div class="muted">
-            🏆 ${escapeHtml(
-              winner.place
-            )} место
-          </div>
-
-          <div class="title">
-            ${escapeHtml(name)}
-          </div>
-
-          <div class="id">
-            🎁 ${escapeHtml(
-              winner.prize ||
-              'Приз'
-            )}
-          </div>
-
-        `;
-
-
-        /*
-         * Если есть username —
-         * вся карточка становится ссылкой.
-         */
-
-        if (winner.username) {
-
-          return `
-
-            <a
-              href="https://t.me/${encodeURIComponent(
-                winner.username
-              )}"
-              target="_blank"
-              style="
-                display:block;
-                text-decoration:none;
-                color:inherit;
-              "
-            >
-
-              <div
-                class="card"
-                style="cursor:pointer;"
-              >
-                ${winnerContent}
-              </div>
-
-            </a>
-
-          `;
-
-        }
-
-
-        /*
-         * Если username нет —
-         * обычная карточка.
-         */
-
+      if (winner.username) {
         return `
-
-          <div class="card">
-            ${winnerContent}
-          </div>
-
+          <a href="https://t.me/${encodeURIComponent(winner.username)}"
+             target="_blank" style="display:block;text-decoration:none;color:inherit;">
+            <div class="card" style="cursor:pointer;">${winnerContent}</div>
+          </a>
         `;
+      }
 
-      }).join('');
-
+      return `<div class="card">${winnerContent}</div>`;
+    }).join('');
   } else {
-
-    winnersHtml = `
-
-      <div class="card">
-
-        <div class="muted">
-          Победители не записаны.
-        </div>
-
-      </div>
-
-    `;
-
+    winnersHtml = `<div class="card"><div class="muted">Победители не записаны.</div></div>`;
   }
-
-
-  /* ------------------------------------------
-     ПРИЗЫ
-     ------------------------------------------ */
 
   let prizesHtml = '';
-
-
   if (prizes.length) {
-
-    prizesHtml =
-      prizes.map(function(prize) {
-
-        return `
-
-          <div class="card">
-
-            <div class="muted">
-              ${escapeHtml(
-                prize.place
-              )} место
-            </div>
-
-            <div class="title">
-              ${escapeHtml(
-                prize.title ||
-                'Приз'
-              )}
-            </div>
-
-            <div class="muted">
-              ${escapeHtml(
-                prize.description ||
-                ''
-              )}
-            </div>
-
-          </div>
-
-        `;
-
-      }).join('');
-
+    prizesHtml = prizes.map(function(prize) {
+      return `
+        <div class="card">
+          <div class="muted">${escapeHtml(prize.place)} место</div>
+          <div class="title">${escapeHtml(prize.title || 'Приз')}</div>
+          <div class="muted">${escapeHtml(prize.description || '')}</div>
+        </div>
+      `;
+    }).join('');
   }
 
-
-  /* ------------------------------------------
-     ЭКРАН
-     ------------------------------------------ */
-
   content.innerHTML = `
-
     <div class="card">
-
       <div class="status">
-
-        <div class="muted">
-          Последний розыгрыш
-        </div>
-
-        <div class="badge">
-          🏁 ЗАВЕРШЁН
-        </div>
-
+        <div class="muted">Последний розыгрыш</div>
+        <div class="badge">🏁 ЗАВЕРШЁН</div>
       </div>
-
-
-      <div class="title">
-        ${escapeHtml(
-          giveaway.title ||
-          'DRIFT TAXI'
-        )}
-      </div>
-
-
-      <div class="id">
-        ID:
-        ${escapeHtml(
-          giveaway.giveaway_id ||
-          '—'
-        )}
-      </div>
-
+      <div class="title">${escapeHtml(giveaway.title || 'DRIFT TAXI')}</div>
+      <div class="id">ID: ${escapeHtml(giveaway.giveaway_id || '—')}</div>
     </div>
-
 
     <div class="stats">
-
-      <div class="stat">
-
-        <div class="stat-value">
-          ${Number(
-            giveaway.tickets ||
-            0
-          )}
-        </div>
-
-        <div class="stat-label">
-          Тикетов
-        </div>
-
-      </div>
-
-
-      <div class="stat">
-
-        <div class="stat-value">
-          ${Number(
-            giveaway.referrals ||
-            0
-          )}
-        </div>
-
-        <div class="stat-label">
-          Приглашений
-        </div>
-
-      </div>
-
-
-      <div class="stat">
-
-        <div class="stat-value">
-          ${Number(
-            giveaway.winners_count ||
-            0
-          )}
-        </div>
-
-        <div class="stat-label">
-          Победителей
-        </div>
-
-      </div>
-
+      <div class="stat"><div class="stat-value">${Number(giveaway.tickets || 0)}</div><div class="stat-label">Тикетов</div></div>
+      <div class="stat"><div class="stat-value">${Number(giveaway.referrals || 0)}</div><div class="stat-label">Приглашений</div></div>
+      <div class="stat"><div class="stat-value">${Number(giveaway.winners_count || 0)}</div><div class="stat-label">Победителей</div></div>
     </div>
-
 
     <div class="card">
-
-      <div class="muted">
-        Период
+      <div class="muted">Период</div>
+      <div style="margin-top:10px;line-height:1.8;font-size:14px;">
+        Начало: <b>${escapeHtml(formatDate(giveaway.start_at))}</b><br>
+        Окончание: <b>${escapeHtml(formatDate(giveaway.end_at))}</b><br>
+        Розыгрыш проведён: <b>${escapeHtml(formatDate(giveaway.drawn_at))}</b>
       </div>
-
-      <div
-        style="
-          margin-top:10px;
-          line-height:1.8;
-          font-size:14px;
-        "
-      >
-
-        Начало:
-        <b>
-          ${escapeHtml(
-            formatDate(
-              giveaway.start_at
-            )
-          )}
-        </b>
-
-        <br>
-
-        Окончание:
-        <b>
-          ${escapeHtml(
-            formatDate(
-              giveaway.end_at
-            )
-          )}
-        </b>
-
-        <br>
-
-        Розыгрыш проведён:
-        <b>
-          ${escapeHtml(
-            formatDate(
-              giveaway.drawn_at
-            )
-          )}
-        </b>
-
-      </div>
-
     </div>
 
-
-    <div class="section-title">
-      🏆 Победители
-    </div>
-
-
+    <div class="section-title">🏆 Победители</div>
     ${winnersHtml}
 
+    ${prizesHtml ? `<div class="section-title">🎁 Призы</div>${prizesHtml}` : ''}
 
-    ${
-      prizesHtml
-        ? `
-
-          <div class="section-title">
-            🎁 Призы
-          </div>
-
-          ${prizesHtml}
-
-        `
-        : ''
-    }
-
-
-    <div class="section-title">
-      Управление
-    </div>
-
-
-    <button
-      onclick="refreshActiveGiveaway()"
-    >
-      🔄 Обновить
-    </button>
-
-
-    <button
-      class="primary"
-      onclick="drawActiveFromMiniApp()"
-    >
-      🎲 Провести розыгрыш сейчас
-    </button>
-
-
-    <button
-      onclick="cancelActiveFromMiniApp()"
-      style="background:#3a1717;color:#ff6b63;"
-    >
-      🛑 Остановить без розыгрыша
-    </button>
-
-
-    <button
-      onclick="showHistory()"
-    >
-      📚 История розыгрышей
-    </button>
-
-
-    <button
-      class="primary"
-      onclick="showCreateForm()"
-    >
-      🎁 Создать новый розыгрыш
-    </button>
-
+    <div class="section-title">Управление</div>
+    <button onclick="showHistory()">📚 История розыгрышей</button>
+    <button class="primary" onclick="showCreateForm()">🎁 Создать новый розыгрыш</button>
   `;
-
 }
-
-
-/* ==========================================
-   HISTORY
-   ========================================== */
 
 async function showHistory() {
-
   currentScreen = 'history';
-
   dashboardRequestId++;
 
-
-  content.innerHTML = `
-
-    <div class="loading">
-      🔄 Загружаем историю...
-    </div>
-
-  `;
-
+  content.innerHTML = `<div class="loading">🔄 Загружаем историю...</div>`;
 
   try {
+    const data = await callApi('history');
 
-    const data =
-      await callApi(
-        'history'
-      );
-
-
-    if (
-      !data ||
-      data.ok === false
-    ) {
-
-      throw new Error(
-        data &&
-        data.error
-          ? data.error
-          : 'Не удалось загрузить историю'
-      );
-
+    if (!data || data.ok === false) {
+      throw new Error(data && data.error ? data.error : 'Не удалось загрузить историю');
     }
 
-
-    renderHistory(
-      data.history || []
-    );
-
-
+    renderHistory(data.history || []);
   } catch (error) {
-
     console.error(error);
-
     showError(error);
-
   }
-
 }
 
-
 function renderHistory(history) {
-
   currentScreen = 'history';
 
-
   if (!history.length) {
-
     content.innerHTML = `
-
       <div class="card">
-
-        <div class="title">
-          📚 История розыгрышей
-        </div>
-
-        <div class="muted">
-          Завершённых розыгрышей пока нет.
-        </div>
-
+        <div class="title">📚 История розыгрышей</div>
+        <div class="muted">Завершённых розыгрышей пока нет.</div>
       </div>
-
-
-      <button
-        class="primary"
-        onclick="loadDashboard(true)"
-      >
-        ← Назад
-      </button>
-
+      <button class="primary" onclick="loadDashboard(true)">← Назад</button>
     `;
-
     return;
-
   }
-
 
   let html = '';
 
-
-  history.forEach(
-    function(giveaway) {
-
-      html += `
-
-        <div
-          class="card"
-          onclick="openHistoryGiveaway('${String(
-            giveaway.giveaway_id
-          ).replace(/'/g, "\\'")}')"
-          style="
-            cursor:pointer;
-            margin-bottom:12px;
-          "
-        >
-
-          <div class="status">
-
-            <div class="muted">
-              🏁 Завершён
-            </div>
-
-            <div class="badge">
-              РЕЗУЛЬТАТЫ
-            </div>
-
-          </div>
-
-
-          <div class="title">
-
-            ${escapeHtml(
-              giveaway.title ||
-              'DRIFT TAXI'
-            )}
-
-          </div>
-
-
-          <div class="id">
-
-            ID:
-            ${escapeHtml(
-              giveaway.giveaway_id ||
-              '—'
-            )}
-
-          </div>
-
-
-          <div
-            style="
-              margin-top:12px;
-              display:grid;
-              grid-template-columns:1fr 1fr;
-              gap:8px;
-            "
-          >
-
-            <div class="muted">
-              👥 ${Number(
-                giveaway.participants ||
-                0
-              )} участников
-            </div>
-
-
-            <div class="muted">
-              🎟 ${Number(
-                giveaway.tickets ||
-                0
-              )} тикетов
-            </div>
-
-
-            <div class="muted">
-              📤 ${Number(
-                giveaway.referrals ||
-                0
-              )} приглашений
-            </div>
-
-
-            <div class="muted">
-              🏆 ${Number(
-                giveaway.winners_count ||
-                0
-              )} победителей
-            </div>
-
-          </div>
-
-
-          <div
-            class="muted"
-            style="margin-top:12px;"
-          >
-
-            ${escapeHtml(
-              formatDate(
-                giveaway.drawn_at ||
-                giveaway.end_at
-              )
-            )}
-
-          </div>
-
+  history.forEach(function(giveaway) {
+    html += `
+      <div class="card"
+           onclick="openHistoryGiveaway('${String(giveaway.giveaway_id).replace(/'/g,"\\'")}')"
+           style="cursor:pointer;margin-bottom:12px;">
+        <div class="status">
+          <div class="muted">🏁 Завершён</div>
+          <div class="badge">РЕЗУЛЬТАТЫ</div>
         </div>
-
-      `;
-
-    }
-  );
-
+        <div class="title">${escapeHtml(giveaway.title || 'DRIFT TAXI')}</div>
+        <div class="id">ID: ${escapeHtml(giveaway.giveaway_id || '—')}</div>
+        <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div class="muted">🎟 ${Number(giveaway.tickets || 0)} тикетов</div>
+          <div class="muted">📤 ${Number(giveaway.referrals || 0)} приглашений</div>
+          <div class="muted">🏆 ${Number(giveaway.winners_count || 0)} победителей</div>
+        </div>
+        <div class="muted" style="margin-top:12px;">
+          ${escapeHtml(formatDate(giveaway.drawn_at || giveaway.end_at))}
+        </div>
+      </div>
+    `;
+  });
 
   content.innerHTML = `
-
-    <div
-      style="
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        margin-bottom:14px;
-      "
-    >
-
-      <div class="title">
-        📚 История
-      </div>
-
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div class="title">📚 История</div>
     </div>
-
-
     ${html}
-
-
-    <button
-      class="primary"
-      onclick="loadDashboard(true)"
-    >
-      ← Назад
-    </button>
-
+    <button class="primary" onclick="loadDashboard(true)">← Назад</button>
   `;
-
 }
 
+async function openHistoryGiveaway(giveawayId) {
+  currentScreen = 'history-detail';
 
-/* ==========================================
-   OPEN HISTORY GIVEAWAY
-   ========================================== */
-
-async function openHistoryGiveaway(
-  giveawayId
-) {
-
-  currentScreen =
-    'history-detail';
-
-
-  content.innerHTML = `
-
-    <div class="loading">
-      🔄 Загружаем результаты...
-    </div>
-
-  `;
-
+  content.innerHTML = `<div class="loading">🔄 Загружаем результаты...</div>`;
 
   try {
+    const data = await callApi('giveaway', {id: giveawayId});
 
-    const data =
-      await callApi(
-        'giveaway',
-        {
-          id:
-            giveawayId
-        }
-      );
-
-
-    if (
-      !data ||
-      data.ok === false
-    ) {
-
-      throw new Error(
-        data &&
-        data.error
-          ? data.error
-          : 'Не удалось загрузить розыгрыш'
-      );
-
+    if (!data || data.ok === false) {
+      throw new Error(data && data.error ? data.error : 'Не удалось загрузить розыгрыш');
     }
 
-
-    renderFinishedGiveaway(
-      data.giveaway
-    );
-
-
+    renderFinishedGiveaway(data.giveaway);
   } catch (error) {
-
     console.error(error);
-
     showError(error);
-
   }
-
 }
-
-
-/* ==========================================
-   EMPTY DASHBOARD
-   ========================================== */
 
 function renderEmptyDashboard() {
-
   currentGiveawayId = '';
-
-  currentScreen =
-    'dashboard';
-
+  currentScreen = 'dashboard';
 
   content.innerHTML = `
-
     <div class="card">
-
-      <div class="title">
-        🚗 DRIFT TAXI
-      </div>
-
-      <div class="muted">
-        Сейчас нет активных или завершённых розыгрышей.
-      </div>
-
+      <div class="title">🚗 DRIFT TAXI</div>
+      <div class="muted">Сейчас нет активных или запланированных розыгрышей.</div>
     </div>
-
-
-    <button
-      class="primary"
-      onclick="showCreateForm()"
-    >
-      🎁 Создать новый розыгрыш
-    </button>
-
+    <button class="primary" onclick="showCreateForm()">🎁 Создать новый розыгрыш</button>
+    <button onclick="showHistory()">📚 История розыгрышей</button>
   `;
-
 }
-
-
-/* ==========================================
-   DASHBOARD
-   ========================================== */
 
 function renderDashboard(data) {
+  currentScreen = 'dashboard';
 
-  currentScreen =
-    'dashboard';
-
-
-  if (data.ok === false) {
-
-    showError(
-      new Error(
-        data.error ||
-        'Неизвестная ошибка'
-      )
-    );
-
+  if (!data || data.ok === false) {
+    showError(new Error(data && data.error ? data.error : 'Неизвестная ошибка'));
     return;
-
   }
-
-
-  /* ------------------------------------------
-     АДМИНИСТРАТОР
-     ------------------------------------------ */
 
   if (data.user) {
-
-    adminName.textContent =
-      data.user.username
-        ? '@' + data.user.username
-        : (
-            data.user.first_name ||
-            'admin'
-          );
-
+    adminName.textContent = data.user.username
+      ? '@' + data.user.username
+      : (data.user.first_name || 'admin');
   }
 
+  const giveaway = data.giveaway;
 
-  /* ------------------------------------------
-     АКТИВНЫЙ / ЗАВЕРШЁННЫЙ
-     ------------------------------------------ */
+  currentGiveawayId = giveaway && giveaway.giveaway_id
+    ? String(giveaway.giveaway_id)
+    : '';
 
-  const giveaway =
-    data.giveaway;
-
-  currentGiveawayId =
-    giveaway && giveaway.giveaway_id
-      ? String(giveaway.giveaway_id)
-      : '';
-
-  const finishedGiveaway =
-    data.finishedGiveaway;
-
-
-  /*
-   * Если активного нет,
-   * показываем последний завершённый.
-   */
+  const finishedGiveaway = data.finishedGiveaway;
 
   if (!giveaway) {
-
-    if (finishedGiveaway) {
-
-      renderFinishedGiveaway(
-        finishedGiveaway
-      );
-
-    } else {
-
-      renderEmptyDashboard();
-
-    }
-
+    if (finishedGiveaway) renderFinishedGiveaway(finishedGiveaway);
+    else renderEmptyDashboard();
     return;
-
   }
 
-
-  /* ------------------------------------------
-     СТАТУС
-     ------------------------------------------ */
-
-  const status =
-    giveaway.status ||
-    'UNKNOWN';
-
+  const status = giveaway.status || 'UNKNOWN';
 
   const statusText = {
+    ACTIVE: 'АКТИВЕН',
+    SCHEDULED: 'ЗАПЛАНИРОВАН',
+    FINISHED: 'ЗАВЕРШЁН',
+    CANCELLED: 'ОТМЕНЁН'
+  }[status] || status;
 
-    ACTIVE:
-      'АКТИВЕН',
-
-    SCHEDULED:
-      'ЗАПЛАНИРОВАН',
-
-    FINISHED:
-      'ЗАВЕРШЁН',
-
-    CANCELLED:
-      'ОТМЕНЁН'
-
-  }[
-    status
-  ] || status;
-
-
-  /* ------------------------------------------
-     DASHBOARD
-     ------------------------------------------ */
+  const isActive = status === 'ACTIVE';
 
   content.innerHTML = `
-
     <div class="card">
-
       <div class="status">
-
-        <div class="muted">
-          Текущий розыгрыш
-        </div>
-
-        <div class="badge">
-          ${escapeHtml(
-            statusText
-          )}
-        </div>
-
+        <div class="muted">${isActive ? 'Текущий розыгрыш' : 'Следующий розыгрыш'}</div>
+        <div class="badge">${escapeHtml(statusText)}</div>
       </div>
 
-
-      <div class="title">
-
-        ${escapeHtml(
-          giveaway.title ||
-          giveaway.name ||
-          'DRIFT TAXI'
-        )}
-
-      </div>
-
-
-      <div class="id">
-
-        ID:
-        ${escapeHtml(
-          giveaway.giveaway_id ||
-          '—'
-        )}
-
-      </div>
-
+      <div class="title">${escapeHtml(giveaway.title || giveaway.name || 'DRIFT TAXI')}</div>
+      <div class="id">ID: ${escapeHtml(giveaway.giveaway_id || '—')}</div>
     </div>
-
 
     <div class="stats">
-
-      <div class="stat">
-
-        <div class="stat-value">
-          ${Number(
-            giveaway.tickets ||
-            0
-          )}
-        </div>
-
-        <div class="stat-label">
-          Тикетов
-        </div>
-
-      </div>
-
-
-      <div class="stat">
-
-        <div class="stat-value">
-          ${Number(
-            giveaway.referrals ||
-            0
-          )}
-        </div>
-
-        <div class="stat-label">
-          Приглашений
-        </div>
-
-      </div>
-
-
-      <div class="stat">
-
-        <div class="stat-value">
-          ${Number(
-            giveaway.winners_count ||
-            0
-          )}
-        </div>
-
-        <div class="stat-label">
-          Победителей
-        </div>
-
-      </div>
-
+      <div class="stat"><div class="stat-value">${Number(giveaway.tickets || 0)}</div><div class="stat-label">Тикетов</div></div>
+      <div class="stat"><div class="stat-value">${Number(giveaway.referrals || 0)}</div><div class="stat-label">Приглашений</div></div>
+      <div class="stat"><div class="stat-value">${Number(giveaway.winners_count || 0)}</div><div class="stat-label">Победителей</div></div>
     </div>
-
 
     <div class="card">
-
-      <div class="muted">
-        Период
+      <div class="muted">Период</div>
+      <div style="margin-top:10px;line-height:1.8;font-size:14px;">
+        Начало: <b>${escapeHtml(formatDate(giveaway.start_at))}</b><br>
+        Окончание: <b>${escapeHtml(formatDate(giveaway.end_at))}</b>
+        ${giveaway.drawn_at ? `<br>Розыгрыш проведён: <b>${escapeHtml(formatDate(giveaway.drawn_at))}</b>` : ''}
       </div>
-
-
-      <div
-        style="
-          margin-top:10px;
-          line-height:1.8;
-          font-size:14px;
-        "
-      >
-
-        Начало:
-
-        <b>
-          ${escapeHtml(
-            formatDate(
-              giveaway.start_at
-            )
-          )}
-        </b>
-
-
-        <br>
-
-
-        Окончание:
-
-        <b>
-          ${escapeHtml(
-            formatDate(
-              giveaway.end_at
-            )
-          )}
-        </b>
-
-      </div>
-
     </div>
 
+    <div class="section-title">Управление</div>
 
-    <div class="section-title">
-      Управление
-    </div>
+    ${isActive ? `
+      <button onclick="refreshActiveGiveaway()">🔄 Обновить</button>
+      <button class="primary" onclick="drawActiveFromMiniApp()">🎲 Провести розыгрыш сейчас</button>
+      <button onclick="cancelActiveFromMiniApp()" style="background:#3a1717;color:#ff6b63;">
+        🛑 Остановить без розыгрыша
+      </button>
+    ` : `
+      <button onclick="refreshActiveGiveaway()">🔄 Обновить</button>
+    `}
 
-
-    <button
-      onclick="showHistory()"
-    >
-      📚 История розыгрышей
-    </button>
-
-
-    <button
-      class="primary"
-      onclick="showCreateForm()"
-    >
-      🎁 Создать новый розыгрыш
-    </button>
-
+    <button onclick="showHistory()">📚 История розыгрышей</button>
+    <button class="primary" onclick="showCreateForm()">🎁 Создать новый розыгрыш</button>
   `;
-
 }
-
-
-/* ==========================================
-   УПРАВЛЕНИЕ АКТИВНЫМ РОЗЫГРЫШЕМ
-   ========================================== */
 
 async function refreshActiveGiveaway() {
-
   await loadDashboard(true);
-
 }
-
 
 async function drawActiveFromMiniApp() {
-
-  const giveawayId =
-    currentGiveawayId;
+  const giveawayId = currentGiveawayId;
 
   if (!giveawayId) {
-
-    tg.showAlert(
-      'Активный розыгрыш не найден.'
-    );
-
-    return;
-
-  }
-
-  const confirmed =
-    confirm(
-      '🎲 Провести розыгрыш сейчас?\n\n' +
-      'После этого будут выбраны победители, ' +
-      'а розыгрыш завершится.'
-    );
-
-  if (!confirmed) {
+    tg.showAlert('Активный розыгрыш не найден.');
     return;
   }
+
+  const confirmed = confirm(
+    '🎲 Провести розыгрыш сейчас?\n\nПосле этого будут выбраны победители, а розыгрыш завершится.'
+  );
+
+  if (!confirmed) return;
 
   try {
+    const result = await callApi('drawGiveaway', {id: giveawayId});
 
-    const result =
-      await callApi(
-        'drawGiveaway',
-        {
-          id: giveawayId
-        }
-      );
-
-    if (
-      !result ||
-      result.ok === false
-    ) {
-
-      throw new Error(
-        result && result.error
-          ? result.error
-          : 'Не удалось провести розыгрыш.'
-      );
-
+    if (!result || result.ok === false) {
+      throw new Error(result && result.error ? result.error : 'Не удалось провести розыгрыш.');
     }
 
-    tg.showAlert(
-      '🎉 Победители выбраны!'
-    );
-
+    tg.showAlert('🎉 Победители выбраны!');
     currentGiveawayId = '';
-
     await loadDashboard(true);
-
   } catch (error) {
-
     showError(error);
-
   }
-
 }
-
 
 async function cancelActiveFromMiniApp() {
-
-  const giveawayId =
-    currentGiveawayId;
+  const giveawayId = currentGiveawayId;
 
   if (!giveawayId) {
-
-    tg.showAlert(
-      'Активный розыгрыш не найден.'
-    );
-
-    return;
-
-  }
-
-  const confirmed =
-    confirm(
-      '🛑 Остановить розыгрыш без выбора победителей?\n\n' +
-      'Он будет завершён как отменённый.'
-    );
-
-  if (!confirmed) {
+    tg.showAlert('Активный розыгрыш не найден.');
     return;
   }
+
+  const confirmed = confirm(
+    '🛑 Остановить розыгрыш без выбора победителей?\n\nОн будет завершён как отменённый.'
+  );
+
+  if (!confirmed) return;
 
   try {
+    const result = await callApi('cancelGiveaway', {id: giveawayId});
 
-    const result =
-      await callApi(
-        'cancelGiveaway',
-        {
-          id: giveawayId
-        }
-      );
-
-    if (
-      !result ||
-      result.ok === false
-    ) {
-
-      throw new Error(
-        result && result.error
-          ? result.error
-          : 'Не удалось остановить розыгрыш.'
-      );
-
+    if (!result || result.ok === false) {
+      throw new Error(result && result.error ? result.error : 'Не удалось остановить розыгрыш.');
     }
 
-    tg.showAlert(
-      'Розыгрыш остановлен.'
-    );
-
+    tg.showAlert('Розыгрыш остановлен.');
     currentGiveawayId = '';
-
     await loadDashboard(true);
-
   } catch (error) {
-
     showError(error);
-
   }
-
 }
-
-
-/* ==========================================
-   CREATE FORM
-   ========================================== */
 
 function showCreateForm() {
-
-  currentScreen =
-    'create';
-
+  currentScreen = 'create';
 
   content.innerHTML = `
-
     <div class="card">
+      <div class="title">🎁 Новый розыгрыш</div>
+      <div class="muted">Заполни параметры розыгрыша</div>
 
-      <div class="title">
-        🎁 Новый розыгрыш
-      </div>
+      <label>Название</label>
+      <input id="title" type="text" placeholder="DRIFT TAXI — Розыгрыш">
 
-      <div class="muted">
-        Заполни параметры розыгрыша
-      </div>
+      <label>Описание</label>
+      <textarea id="description" placeholder="Описание розыгрыша"></textarea>
 
+      <label>Начало</label>
+      <input id="start" type="datetime-local">
 
-      <label>
-        Название
-      </label>
+      <label>Окончание</label>
+      <input id="end" type="datetime-local">
 
-
-      <input
-        id="title"
-        type="text"
-        placeholder="DRIFT TAXI — Розыгрыш"
-      >
-
-
-      <label>
-        Описание
-      </label>
-
-
-      <textarea
-        id="description"
-        placeholder="Описание розыгрыша"
-      ></textarea>
-
-
-      <label>
-        Начало
-      </label>
-
-
-      <input
-        id="start"
-        type="datetime-local"
-      >
-
-
-      <label>
-        Окончание
-      </label>
-
-
-      <input
-        id="end"
-        type="datetime-local"
-      >
-
-
-      <label>
-        Количество победителей
-      </label>
-
-
-      <input
-        id="winners"
-        type="number"
-        min="1"
-        value="1"
-      >
-
+      <label>Количество победителей</label>
+      <input id="winners" type="number" min="1" value="1">
 
       <div class="switch-row">
-
-        <div class="switch-text">
-          🎲 Автоматически определить победителей
-        </div>
-
-
-        <input
-          id="autoDraw"
-          class="switch"
-          type="checkbox"
-          checked
-        >
-
+        <div class="switch-text">🎲 Автоматически определить победителей</div>
+        <input id="autoDraw" class="switch" type="checkbox" checked>
       </div>
 
-
-      <div class="section-title">
-        Призы
-      </div>
-
-
+      <div class="section-title">Призы</div>
       <div id="prizes"></div>
 
-
-      <button
-        onclick="addPrize()"
-      >
-        ➕ Добавить приз
-      </button>
-
-
-      <button
-        class="primary"
-        id="createButton"
-        onclick="createGiveaway()"
-      >
-        🚀 Создать розыгрыш
-      </button>
-
-
-      <button
-        onclick="loadDashboard(true)"
-      >
-        ← Назад
-      </button>
-
+      <button onclick="addPrize()">➕ Добавить приз</button>
+      <button class="primary" id="createButton" onclick="createGiveaway()">🚀 Создать розыгрыш</button>
+      <button onclick="loadDashboard(true)">← Назад</button>
     </div>
-
   `;
-
 
   addPrize();
-
 }
-
-
-/* ==========================================
-   ADD PRIZE
-   ========================================== */
 
 function addPrize() {
+  const container = document.getElementById('prizes');
+  if (!container) return;
 
-  const container =
-    document.getElementById(
-      'prizes'
-    );
-
-
-  if (!container) {
-    return;
-  }
-
-
-  const number =
-    container.children.length +
-    1;
-
-
-  const div =
-    document.createElement(
-      'div'
-    );
-
-
-  div.className =
-    'prize';
-
+  const number = container.children.length + 1;
+  const div = document.createElement('div');
+  div.className = 'prize';
 
   div.innerHTML = `
-
     <div class="prize-head">
-
-      <div class="prize-number">
-        Приз ${number}
-      </div>
-
-
-      <button
-        class="remove"
-        onclick="
-          this.parentElement
-            .parentElement
-            .remove()
-        "
-      >
-        Удалить
-      </button>
-
+      <div class="prize-number">Приз ${number}</div>
+      <button class="remove" onclick="this.parentElement.parentElement.remove()">Удалить</button>
     </div>
 
+    <label>Название приза</label>
+    <input class="prize-title" type="text" placeholder="Например: поездка на DRIFT TAXI">
 
-    <label>
-      Название приза
-    </label>
-
-
-    <input
-      class="prize-title"
-      type="text"
-      placeholder="Например: поездка на DRIFT TAXI"
-    >
-
-
-    <label>
-      Описание
-    </label>
-
-
-    <textarea
-      class="prize-description"
-      placeholder="Описание приза"
-    ></textarea>
-
+    <label>Описание</label>
+    <textarea class="prize-description" placeholder="Описание приза"></textarea>
   `;
 
-
-  container.appendChild(
-    div
-  );
-
+  container.appendChild(div);
 }
-
-
-/* ==========================================
-   CREATE GIVEAWAY
-   ========================================== */
 
 async function createGiveaway() {
+  const button = document.getElementById('createButton');
 
-  const button =
-    document.getElementById(
-      'createButton'
-    );
-
-
-  const title =
-    document.getElementById(
-      'title'
-    ).value.trim();
-
-
-  const description =
-    document.getElementById(
-      'description'
-    ).value.trim();
-
-
-  const start =
-    document.getElementById(
-      'start'
-    ).value;
-
-
-  const end =
-    document.getElementById(
-      'end'
-    ).value;
-
-
-  const winners =
-    Number(
-      document.getElementById(
-        'winners'
-      ).value
-    );
-
-
-  const autoDraw =
-    document.getElementById(
-      'autoDraw'
-    ).checked;
-
-
-  /* ------------------------------------------
-     ПРОВЕРКИ
-     ------------------------------------------ */
+  const title = document.getElementById('title').value.trim();
+  const description = document.getElementById('description').value.trim();
+  const start = document.getElementById('start').value;
+  const end = document.getElementById('end').value;
+  const winners = Number(document.getElementById('winners').value);
+  const autoDraw = document.getElementById('autoDraw').checked;
 
   if (!title) {
-
-    tg.showAlert(
-      'Укажи название розыгрыша.'
-    );
-
+    tg.showAlert('Укажи название розыгрыша.');
     return;
-
   }
-
 
   if (!start || !end) {
-
-    tg.showAlert(
-      'Укажи дату и время начала и окончания.'
-    );
-
+    tg.showAlert('Укажи дату и время начала и окончания.');
     return;
-
   }
 
-
-  if (
-    new Date(end) <=
-    new Date(start)
-  ) {
-
-    tg.showAlert(
-      'Окончание должно быть позже начала.'
-    );
-
+  if (new Date(end) <= new Date(start)) {
+    tg.showAlert('Окончание должно быть позже начала.');
     return;
-
   }
 
-
-  if (
-    !winners ||
-    winners < 1
-  ) {
-
-    tg.showAlert(
-      'Количество победителей должно быть не меньше 1.'
-    );
-
+  if (!winners || winners < 1) {
+    tg.showAlert('Количество победителей должно быть не меньше 1.');
     return;
-
   }
 
-
-  /* ------------------------------------------
-     ПРИЗЫ
-     ------------------------------------------ */
-
-  const prizeElements =
-    document.querySelectorAll(
-      '.prize'
-    );
-
-
+  const prizeElements = document.querySelectorAll('.prize');
   const prizes = [];
 
+  prizeElements.forEach(function(element, index) {
+    const prizeTitle = element.querySelector('.prize-title').value.trim();
+    const prizeDescription = element.querySelector('.prize-description').value.trim();
 
-  prizeElements.forEach(
-    function(
-      element,
-      index
-    ) {
-
-      const prizeTitle =
-        element
-          .querySelector(
-            '.prize-title'
-          )
-          .value
-          .trim();
-
-
-      const prizeDescription =
-        element
-          .querySelector(
-            '.prize-description'
-          )
-          .value
-          .trim();
-
-
-      if (prizeTitle) {
-
-        prizes.push({
-
-          place:
-            index + 1,
-
-          title:
-            prizeTitle,
-
-          description:
-            prizeDescription
-
-        });
-
-      }
-
+    if (prizeTitle) {
+      prizes.push({
+        place: index + 1,
+        title: prizeTitle,
+        description: prizeDescription
+      });
     }
-  );
-
+  });
 
   if (!prizes.length) {
-
-    tg.showAlert(
-      'Добавь хотя бы один приз.'
-    );
-
+    tg.showAlert('Добавь хотя бы один приз.');
     return;
-
   }
-
-
-  /* ------------------------------------------
-     DATA
-     ------------------------------------------ */
 
   const data = {
-
-    title:
-      title,
-
-    description:
-      description,
-
-    start:
-      start,
-
-    end:
-      end,
-
-    winners:
-      winners,
-
-    prizes:
-      prizes,
-
-    autoDraw:
-      autoDraw
-
+    title: title,
+    description: description,
+    start: start,
+    end: end,
+    winners: winners,
+    prizes: prizes,
+    autoDraw: autoDraw
   };
 
-
-  /* ------------------------------------------
-     SEND
-     ------------------------------------------ */
-
   try {
+    button.disabled = true;
+    button.textContent = '⏳ Создаём...';
 
-    button.disabled =
-      true;
+    const result = await callApi('createGiveaway', {
+      data: JSON.stringify(data)
+    });
 
-
-    button.textContent =
-      '⏳ Создаём...';
-
-
-    const result =
-      await callApi(
-        'createGiveaway',
-        {
-          data:
-            JSON.stringify(
-              data
-            )
-        }
-      );
-
-
-    if (
-      !result ||
-      result.ok === false
-    ) {
-
-      throw new Error(
-        result &&
-        result.error
-          ? result.error
-          : 'Не удалось создать розыгрыш'
-      );
-
+    if (!result || result.ok === false) {
+      throw new Error(result && result.error ? result.error : 'Не удалось создать розыгрыш');
     }
 
-
-    tg.showAlert(
-      '🎉 Розыгрыш создан!'
-    );
-
-
+    tg.showAlert('🎉 Розыгрыш создан!');
     await loadDashboard(true);
 
-
   } catch (error) {
-
-    button.disabled =
-      false;
-
-
-    button.textContent =
-      '🚀 Создать розыгрыш';
-
-
+    button.disabled = false;
+    button.textContent = '🚀 Создать розыгрыш';
     showError(error);
-
   }
-
 }
 
+async function loadDashboard(showLoading = true) {
+  if (!showLoading && currentScreen !== 'dashboard') return;
 
-/* ==========================================
-   LOAD DASHBOARD
-   ========================================== */
-
-async function loadDashboard(
-  showLoading = true
-) {
-
-  /*
-   * Автообновление разрешено только на dashboard.
-   */
-  if (
-    !showLoading &&
-    currentScreen !== 'dashboard'
-  ) {
-    return;
-  }
+  // 3-секундный автообновлятор остаётся,
+  // но второй запрос не стартует, пока первый не завершился.
+  if (dashboardLoading) return;
 
   const requestId = ++dashboardRequestId;
+  dashboardLoading = true;
 
   try {
-
     if (showLoading) {
-      content.innerHTML = `
-        <div class="loading">
-          🔄 Загружаем админку...
-        </div>
-      `;
+      content.innerHTML = `<div class="loading">🔄 Загружаем админку...</div>`;
     }
 
     const data = await callApi('dashboard');
 
-    /*
-     * Пользователь мог открыть историю/создание/участников
-     * пока запрос dashboard ещё выполнялся.
-     * Старый ответ в таком случае НЕЛЬЗЯ применять.
-     */
-    if (
-      requestId !== dashboardRequestId ||
-      currentScreen !== 'dashboard'
-    ) {
+    if (requestId !== dashboardRequestId || currentScreen !== 'dashboard') {
       return;
     }
 
     renderDashboard(data);
 
   } catch (error) {
-
     console.error(error);
 
     if (
@@ -2231,98 +626,29 @@ async function loadDashboard(
     ) {
       showError(error);
     }
+
+  } finally {
+    dashboardLoading = false;
   }
-
 }
-
-
-/* ==========================================
-   AUTO REFRESH
-   ========================================== */
 
 function startDashboardAutoRefresh() {
+  if (dashboardRefreshTimer) return;
 
-  if (dashboardRefreshTimer) {
-
-    return;
-
-  }
-
-
-  dashboardRefreshTimer =
-    setInterval(
-      function() {
-
-        /*
-         * Автообновляем только главный
-         * экран Dashboard.
-         *
-         * История, результаты и форма
-         * создания не перерисовываются.
-         */
-
-        if (
-          currentScreen !==
-          'dashboard'
-        ) {
-
-          return;
-
-        }
-
-
-        loadDashboard(false);
-
-      },
-      3000
-    );
-
+  dashboardRefreshTimer = setInterval(function() {
+    if (currentScreen !== 'dashboard') return;
+    loadDashboard(false);
+  }, 3000);
 }
 
-
-/* ==========================================
-   FIRST LOAD
-   ========================================== */
-
 loadDashboard(true);
-
 startDashboardAutoRefresh();
 
-
-/* ==========================================
-   RETURN TO MINI APP
-   ========================================== */
-
-document.addEventListener(
-  'visibilitychange',
-  function() {
-
-    if (!document.hidden) {
-
-      /*
-       * Если вернулись именно
-       * на главный экран —
-       * обновляем его.
-       */
-
-      if (
-        currentScreen ===
-        'dashboard'
-      ) {
-
-        loadDashboard(false);
-
-      }
-
-    }
-
+document.addEventListener('visibilitychange', function() {
+  if (!document.hidden && currentScreen === 'dashboard') {
+    loadDashboard(false);
   }
-);
-
-
-/* FIX: renderDashboard restored; participants removed */
-
+});
 </script>
-
 </body>
 </html>
