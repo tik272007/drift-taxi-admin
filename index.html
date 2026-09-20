@@ -2,34 +2,206 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
   <title>DRIFT TAXI</title>
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #111;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
+
+    h2 {
+      margin-top: 0;
+    }
+
+    #status {
+      margin-top: 20px;
+      padding: 16px;
+      border-radius: 12px;
+      background: #1d1d1d;
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.5;
+    }
+
+    .loading {
+      border: 1px solid #ffd60a;
+    }
+
+    .success {
+      border: 1px solid #32d74b;
+    }
+
+    .error {
+      border: 1px solid #ff453a;
+    }
+  </style>
 </head>
 
-<body style="background:#111;color:white;font-family:Arial;padding:20px;">
+<body>
 
-<h2>🚗 DRIFT TAXI Mini App</h2>
+  <h2>🚗 DRIFT TAXI</h2>
 
-<pre id="debug">Загрузка...</pre>
+  <div id="status" class="loading">
+    🔄 Подключение...
+  </div>
 
-<script>
+  <script>
 
-const tg = window.Telegram.WebApp;
+    const tg = window.Telegram.WebApp;
 
-tg.ready();
-tg.expand();
+    tg.ready();
+    tg.expand();
 
-document.getElementById('debug').textContent =
-  JSON.stringify({
-    version: tg.version,
-    platform: tg.platform,
-    initDataLength: tg.initData.length,
-    initDataUnsafe: tg.initDataUnsafe
-  }, null, 2);
+    const status = document.getElementById('status');
 
-</script>
+    /*
+     * ВАЖНО:
+     * СЮДА ВСТАВЬ URL ТВОЕГО APPS SCRIPT WEB APP.
+     *
+     * Пример:
+     *
+     * https://script.google.com/macros/s/ABC123/exec
+     */
+    const API_URL =
+      'ВСТАВЬ_СЮДА_СВОЙ_APPS_SCRIPT_URL';
+
+    function show(text, className) {
+
+      status.className = className || '';
+
+      status.textContent = text;
+    }
+
+
+    async function checkAuth() {
+
+      try {
+
+        if (!tg.initData) {
+
+          show(
+            '❌ Telegram initData пуст.\n\n' +
+            'Открой приложение через Telegram Main App.',
+            'error'
+          );
+
+          return;
+        }
+
+
+        show(
+          '🔐 Проверяем доступ...\n\n' +
+          'Telegram ID: ' +
+          (tg.initDataUnsafe.user
+            ? tg.initDataUnsafe.user.id
+            : 'не определён'),
+          'loading'
+        );
+
+
+        const url =
+          API_URL +
+          '?api=auth&initData=' +
+          encodeURIComponent(tg.initData);
+
+
+        const response =
+          await fetch(url);
+
+
+        if (!response.ok) {
+
+          throw new Error(
+            'HTTP ' + response.status
+          );
+        }
+
+
+        const result =
+          await response.json();
+
+
+        console.log(
+          'API RESULT:',
+          result
+        );
+
+
+        if (!result.ok) {
+
+          show(
+            '❌ Авторизация не прошла.\n\n' +
+            JSON.stringify(
+              result,
+              null,
+              2
+            ),
+            'error'
+          );
+
+          return;
+        }
+
+
+        if (!result.isAdmin) {
+
+          show(
+            '⛔ Доступ запрещён.\n\n' +
+            'Telegram ID: ' +
+            result.telegramId,
+            'error'
+          );
+
+          return;
+        }
+
+
+        show(
+          '✅ Авторизация успешна!\n\n' +
+          'Telegram ID: ' +
+          result.telegramId +
+          '\n\n' +
+          'Username: @' +
+          (result.username || '—') +
+          '\n\n' +
+          'Имя: ' +
+          (result.firstName || '—') +
+          '\n\n' +
+          '👑 Вы администратор.',
+          'success'
+        );
+
+
+      } catch (error) {
+
+        console.error(error);
+
+        show(
+          '❌ Ошибка подключения к API.\n\n' +
+          error.message,
+          'error'
+        );
+
+      }
+
+    }
+
+
+    checkAuth();
+
+  </script>
 
 </body>
 </html>
