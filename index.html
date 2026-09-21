@@ -359,6 +359,8 @@ let dashboardRefreshTimer = null;
 
 let dashboardRequestId = 0;
 
+let dashboardRequestInFlight = false;
+
 let historyOpen = false;
 
 let currentGiveawayId = '';
@@ -2266,6 +2268,12 @@ async function loadDashboard(
     return;
   }
 
+  if (dashboardRequestInFlight) {
+    return;
+  }
+
+  dashboardRequestInFlight = true;
+
   const requestId =
     ++dashboardRequestId;
 
@@ -2310,16 +2318,17 @@ async function loadDashboard(
     console.error(error);
 
     if (
-      historyOpen ||
-      requestId !== dashboardRequestId ||
-      currentScreen !== 'dashboard'
+      !historyOpen &&
+      requestId === dashboardRequestId &&
+      currentScreen === 'dashboard' &&
+      showLoading
     ) {
-      return;
-    }
-
-    if (showLoading) {
       showError(error);
     }
+
+  } finally {
+
+    dashboardRequestInFlight = false;
 
   }
 
