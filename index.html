@@ -357,8 +357,6 @@ let currentScreen = 'dashboard';
 
 let dashboardRefreshTimer = null;
 
-let dashboardRequestId = 0;
-
 let currentGiveawayId = '';
 
 
@@ -517,7 +515,7 @@ function showError(error) {
 
     <button
       class="primary"
-      onclick="loadDashboard(true)"
+      onclick="historyOpen = false; loadDashboard(true)"
       style="margin-top:12px;"
     >
       🔄 Повторить
@@ -894,22 +892,6 @@ function renderFinishedGiveaway(giveaway) {
 
 
     <button
-      class="primary"
-      onclick="drawActiveFromMiniApp()"
-    >
-      🎲 Провести розыгрыш сейчас
-    </button>
-
-
-    <button
-      onclick="cancelActiveFromMiniApp()"
-      style="background:#3a1717;color:#ff6b63;"
-    >
-      🛑 Остановить без розыгрыша
-    </button>
-
-
-    <button
       onclick="showHistory()"
     >
       📚 История розыгрышей
@@ -935,9 +917,12 @@ function renderFinishedGiveaway(giveaway) {
 async function showHistory() {
 
   /*
-   * Отменяем право уже запущенного
-   * запроса Dashboard менять экран.
+   * Жёстко блокируем Dashboard на время
+   * открытия истории. Даже если в этот момент
+   * уже выполняется запрос Dashboard, его ответ
+   * больше не имеет права менять экран.
    */
+  historyOpen = true;
   dashboardRequestId++;
 
   currentScreen = 'history';
@@ -985,11 +970,13 @@ async function showHistory() {
     console.error(error);
 
     if (
+      !historyOpen ||
       currentScreen !== 'history'
     ) {
       return;
     }
 
+    historyOpen = false;
     showError(error);
 
   }
@@ -999,6 +986,7 @@ async function showHistory() {
 
 function renderHistory(history) {
 
+  historyOpen = true;
   currentScreen = 'history';
 
 
@@ -1021,7 +1009,7 @@ function renderHistory(history) {
 
       <button
         class="primary"
-        onclick="loadDashboard(true)"
+        onclick="historyOpen = false; loadDashboard(true)"
       >
         ← Назад
       </button>
@@ -1174,7 +1162,7 @@ function renderHistory(history) {
 
     <button
       class="primary"
-      onclick="loadDashboard(true)"
+      onclick="historyOpen = false; loadDashboard(true)"
     >
       ← Назад
     </button>
@@ -1191,6 +1179,9 @@ function renderHistory(history) {
 async function openHistoryGiveaway(
   giveawayId
 ) {
+
+  historyOpen = true;
+  dashboardRequestId++;
 
   currentScreen =
     'history-detail';
@@ -1273,6 +1264,20 @@ function renderEmptyDashboard() {
       </div>
 
     </div>
+
+
+    <button
+      onclick="refreshActiveGiveaway()"
+    >
+      🔄 Обновить
+    </button>
+
+
+    <button
+      onclick="showHistory()"
+    >
+      📚 История розыгрышей
+    </button>
 
 
     <button
@@ -1561,6 +1566,21 @@ function renderDashboard(data) {
 
 
     <button
+      onclick="refreshActiveGiveaway()"
+    >
+      🔄 Обновить
+    </button>
+
+
+    <button
+      class="primary"
+      onclick="drawActiveFromMiniApp()"
+    >
+      🎲 Провести розыгрыш сейчас
+    </button>
+
+
+    <button
       onclick="showHistory()"
     >
       📚 История розыгрышей
@@ -1727,6 +1747,9 @@ async function cancelActiveFromMiniApp() {
 
 function showCreateForm() {
 
+  historyOpen = false;
+  dashboardRequestId++;
+
   currentScreen =
     'create';
 
@@ -1844,7 +1867,7 @@ function showCreateForm() {
 
 
       <button
-        onclick="loadDashboard(true)"
+        onclick="historyOpen = false; loadDashboard(true)"
       >
         ← Назад
       </button>
@@ -2224,24 +2247,23 @@ async function loadDashboard(
 ) {
 
   /*
-   * Если пользователь сейчас находится
-   * в истории или в форме создания,
-   * автоматический refresh не должен
-   * перерисовывать экран.
+   * История имеет абсолютный приоритет.
+   * Пока historyOpen=true, никакой Dashboard
+   * запрос не может перерисовать экран.
    */
+  if (historyOpen) {
+    return;
+  }
 
   if (
     !showLoading &&
     currentScreen !== 'dashboard'
   ) {
-
     return;
-
   }
 
   const requestId =
     ++dashboardRequestId;
-
 
   try {
 
@@ -2257,60 +2279,48 @@ async function loadDashboard(
 
     }
 
-
     const data =
       await callApi(
         'dashboard'
       );
 
-
     /*
-     * Пользователь мог открыть историю
-     * или другой экран пока запрос Dashboard
-     * ещё выполнялся.
-     *
-     * Старый ответ в таком случае
-     * НЕЛЬЗЯ применять.
+     * За время запроса пользователь мог
+     * открыть историю. В таком случае
+     * полностью игнорируем старый ответ.
      */
-
     if (
+      historyOpen ||
       requestId !== dashboardRequestId ||
       currentScreen !== 'dashboard'
     ) {
-
       return;
-
     }
-
 
     renderDashboard(
       data
     );
 
-
   } catch (error) {
 
     console.error(error);
 
-
-    /*
-     * При автообновлении не уничтожаем
-     * уже рабочую админку.
-     */
-
     if (
-      showLoading &&
-      requestId === dashboardRequestId &&
-      currentScreen === 'dashboard'
+      historyOpen ||
+      requestId !== dashboardRequestId ||
+      currentScreen !== 'dashboard'
     ) {
+      return;
+    }
 
+    if (showLoading) {
       showError(error);
-
     }
 
   }
 
 }
+
 
 
 /* ==========================================
