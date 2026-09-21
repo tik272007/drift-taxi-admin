@@ -357,6 +357,8 @@ let currentScreen = 'dashboard';
 
 let dashboardRefreshTimer = null;
 
+let dashboardRequestId = 0;
+
 let currentGiveawayId = '';
 
 
@@ -892,6 +894,22 @@ function renderFinishedGiveaway(giveaway) {
 
 
     <button
+      class="primary"
+      onclick="drawActiveFromMiniApp()"
+    >
+      🎲 Провести розыгрыш сейчас
+    </button>
+
+
+    <button
+      onclick="cancelActiveFromMiniApp()"
+      style="background:#3a1717;color:#ff6b63;"
+    >
+      🛑 Остановить без розыгрыша
+    </button>
+
+
+    <button
       onclick="showHistory()"
     >
       📚 История розыгрышей
@@ -915,6 +933,12 @@ function renderFinishedGiveaway(giveaway) {
    ========================================== */
 
 async function showHistory() {
+
+  /*
+   * Отменяем право уже запущенного
+   * запроса Dashboard менять экран.
+   */
+  dashboardRequestId++;
 
   currentScreen = 'history';
 
@@ -959,6 +983,12 @@ async function showHistory() {
   } catch (error) {
 
     console.error(error);
+
+    if (
+      currentScreen !== 'history'
+    ) {
+      return;
+    }
 
     showError(error);
 
@@ -1528,29 +1558,6 @@ function renderDashboard(data) {
     <div class="section-title">
       Управление
     </div>
-
-
-    <button
-      onclick="refreshActiveGiveaway()"
-    >
-      🔄 Обновить
-    </button>
-
-
-    ${
-      status === 'ACTIVE'
-        ? `
-
-          <button
-            class="primary"
-            onclick="drawActiveFromMiniApp()"
-          >
-            🎲 Провести розыгрыш сейчас
-          </button>
-
-        `
-        : ''
-    }
 
 
     <button
@@ -2232,6 +2239,9 @@ async function loadDashboard(
 
   }
 
+  const requestId =
+    ++dashboardRequestId;
+
 
   try {
 
@@ -2254,6 +2264,25 @@ async function loadDashboard(
       );
 
 
+    /*
+     * Пользователь мог открыть историю
+     * или другой экран пока запрос Dashboard
+     * ещё выполнялся.
+     *
+     * Старый ответ в таком случае
+     * НЕЛЬЗЯ применять.
+     */
+
+    if (
+      requestId !== dashboardRequestId ||
+      currentScreen !== 'dashboard'
+    ) {
+
+      return;
+
+    }
+
+
     renderDashboard(
       data
     );
@@ -2269,7 +2298,11 @@ async function loadDashboard(
      * уже рабочую админку.
      */
 
-    if (showLoading) {
+    if (
+      showLoading &&
+      requestId === dashboardRequestId &&
+      currentScreen === 'dashboard'
+    ) {
 
       showError(error);
 
