@@ -530,7 +530,7 @@ function showError(error) {
    FINISHED GIVEAWAY
    ========================================== */
 
-function renderFinishedGiveaway(giveaway) {
+function renderFinishedGiveaway(giveaway, historyLabel = 'Последний розыгрыш') {
 
   currentGiveawayId = '';
 
@@ -709,7 +709,7 @@ function renderFinishedGiveaway(giveaway) {
       <div class="status">
 
         <div class="muted">
-          Последний розыгрыш
+          ${escapeHtml(historyLabel)}
         </div>
 
         <div class="badge">
@@ -1007,7 +1007,7 @@ function renderHistory(history) {
 
 
   history.forEach(
-    function(giveaway) {
+    function(giveaway, index) {
 
       html += `
 
@@ -1015,7 +1015,7 @@ function renderHistory(history) {
           class="card"
           onclick="openHistoryGiveaway('${String(
             giveaway.giveaway_id
-          ).replace(/'/g, "\\'")}')"
+          ).replace(/'/g, "\\'")}', ${index})"
           style="
             cursor:pointer;
             margin-bottom:12px;
@@ -1025,7 +1025,7 @@ function renderHistory(history) {
           <div class="status">
 
             <div class="muted">
-              🏁 Завершён
+              ${index === 0 ? 'Последний розыгрыш' : 'Розыгрыш №' + index}
             </div>
 
             <div class="badge">
@@ -1159,7 +1159,8 @@ function renderHistory(history) {
    ========================================== */
 
 async function openHistoryGiveaway(
-  giveawayId
+  giveawayId,
+  historyIndex = 0
 ) {
 
   currentScreen =
@@ -1203,7 +1204,8 @@ async function openHistoryGiveaway(
 
 
     renderFinishedGiveaway(
-      data.giveaway
+      data.giveaway,
+      historyIndex === 0 ? 'Последний розыгрыш' : 'Розыгрыш №' + historyIndex
     );
 
 
