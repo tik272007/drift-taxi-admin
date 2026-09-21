@@ -357,10 +357,6 @@ let currentScreen = 'dashboard';
 
 let dashboardRefreshTimer = null;
 
-let dashboardRequestId = 0;
-
-
-
 let currentGiveawayId = '';
 
 
@@ -896,6 +892,22 @@ function renderFinishedGiveaway(giveaway) {
 
 
     <button
+      class="primary"
+      onclick="drawActiveFromMiniApp()"
+    >
+      🎲 Провести розыгрыш сейчас
+    </button>
+
+
+    <button
+      onclick="cancelActiveFromMiniApp()"
+      style="background:#3a1717;color:#ff6b63;"
+    >
+      🛑 Остановить без розыгрыша
+    </button>
+
+
+    <button
       onclick="showHistory()"
     >
       📚 История розыгрышей
@@ -919,14 +931,6 @@ function renderFinishedGiveaway(giveaway) {
    ========================================== */
 
 async function showHistory() {
-
-  /*
-   * Жёстко блокируем Dashboard на время
-   * открытия истории. Даже если в этот момент
-   * уже выполняется запрос Dashboard, его ответ
-   * больше не имеет права менять экран.
-   */
-  dashboardRequestId++;
 
   currentScreen = 'history';
 
@@ -972,12 +976,6 @@ async function showHistory() {
 
     console.error(error);
 
-    if (
-      !false ||
-      currentScreen !== 'history'
-    ) {
-      return;
-    }
     showError(error);
 
   }
@@ -986,6 +984,7 @@ async function showHistory() {
 
 
 function renderHistory(history) {
+
   currentScreen = 'history';
 
 
@@ -1008,7 +1007,7 @@ function renderHistory(history) {
 
       <button
         class="primary"
-        onclick="loadDashboard(true)"
+        onclick="goDashboard()"
       >
         ← Назад
       </button>
@@ -1161,7 +1160,7 @@ function renderHistory(history) {
 
     <button
       class="primary"
-      onclick="loadDashboard(true)"
+      onclick="goDashboard()"
     >
       ← Назад
     </button>
@@ -1178,7 +1177,6 @@ function renderHistory(history) {
 async function openHistoryGiveaway(
   giveawayId
 ) {
-  dashboardRequestId++;
 
   currentScreen =
     'history-detail';
@@ -1261,20 +1259,6 @@ function renderEmptyDashboard() {
       </div>
 
     </div>
-
-
-    <button
-      onclick="refreshActiveGiveaway()"
-    >
-      🔄 Обновить
-    </button>
-
-
-    <button
-      onclick="showHistory()"
-    >
-      📚 История розыгрышей
-    </button>
 
 
     <button
@@ -1563,21 +1547,6 @@ function renderDashboard(data) {
 
 
     <button
-      onclick="refreshActiveGiveaway()"
-    >
-      🔄 Обновить
-    </button>
-
-
-    <button
-      class="primary"
-      onclick="drawActiveFromMiniApp()"
-    >
-      🎲 Провести розыгрыш сейчас
-    </button>
-
-
-    <button
       onclick="showHistory()"
     >
       📚 История розыгрышей
@@ -1743,7 +1712,6 @@ async function cancelActiveFromMiniApp() {
    ========================================== */
 
 function showCreateForm() {
-  dashboardRequestId++;
 
   currentScreen =
     'create';
@@ -1862,7 +1830,7 @@ function showCreateForm() {
 
 
       <button
-        onclick="loadDashboard(true)"
+        onclick="goDashboard()"
       >
         ← Назад
       </button>
@@ -2233,6 +2201,20 @@ async function createGiveaway() {
 }
 
 
+
+/* ==========================================
+   НАЗАД НА ГЛАВНЫЙ ЭКРАН
+   ========================================== */
+
+function goDashboard() {
+
+  currentScreen = 'dashboard';
+
+  loadDashboard(true);
+
+}
+
+
 /* ==========================================
    LOAD DASHBOARD
    ========================================== */
@@ -2242,61 +2224,64 @@ async function loadDashboard(
 ) {
 
   /*
-   * Явный переход назад всегда переводит
-   * экран в dashboard ДО начала запроса.
+   * Если пользователь сейчас находится
+   * в истории или в форме создания,
+   * автоматический refresh не должен
+   * перерисовывать экран.
    */
-  if (showLoading) {
-    currentScreen = 'dashboard';
-  }
 
-  /*
-   * Автообновление работает только на dashboard.
-   */
   if (
     !showLoading &&
     currentScreen !== 'dashboard'
   ) {
+
     return;
+
   }
 
-  const requestId = ++dashboardRequestId;
 
   try {
 
     if (showLoading) {
+
       content.innerHTML = `
+
         <div class="loading">
           🔄 Загружаем админку...
         </div>
+
       `;
+
     }
 
-    const data = await callApi('dashboard');
 
-    /*
-     * Если пользователь успел открыть другой экран,
-     * старый ответ dashboard не применяем.
-     */
-    if (
-      requestId !== dashboardRequestId ||
-      currentScreen !== 'dashboard'
-    ) {
-      return;
-    }
+    const data =
+      await callApi(
+        'dashboard'
+      );
 
-    renderDashboard(data);
+
+    renderDashboard(
+      data
+    );
+
 
   } catch (error) {
 
     console.error(error);
 
-    if (
-      showLoading &&
-      requestId === dashboardRequestId &&
-      currentScreen === 'dashboard'
-    ) {
+
+    /*
+     * При автообновлении не уничтожаем
+     * уже рабочую админку.
+     */
+
+    if (showLoading) {
+
       showError(error);
+
     }
+
   }
 
 }
