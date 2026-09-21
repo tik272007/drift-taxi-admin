@@ -594,6 +594,14 @@ async function createGiveaway() {
 }
 
 async function loadDashboard(showLoading = true) {
+  // При явном переходе назад из истории/формы
+  // сначала возвращаем экран в dashboard.
+  // Иначе текущий экран остаётся history/history-detail,
+  // а ответ dashboard отбрасывается проверкой currentScreen.
+  if (showLoading) {
+    currentScreen = 'dashboard';
+  }
+
   if (!showLoading && currentScreen !== 'dashboard') return;
 
   // 3-секундный автообновлятор остаётся,
